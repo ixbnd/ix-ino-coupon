@@ -2,6 +2,7 @@ export * from './token'
 export type { SessionPayload } from './token'
 
 import { cookies } from 'next/headers'
+import { notFound } from 'next/navigation'
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db/client'
 import { employees } from '@/lib/db/schema'
@@ -23,4 +24,9 @@ export async function requireDbSession() {
   const emp = await db.query.employees.findFirst({ where: eq(employees.id, session.pk) })
   if (!emp || !emp.active || emp.tokenVersion !== session.tv) return null
   return { session, employee: emp }
+}
+export async function requireAdmin() {
+  const auth = await requireDbSession()
+  if (!auth || auth.employee.role !== 'admin') notFound() // 404, not 403 — spec
+  return auth
 }
