@@ -37,6 +37,51 @@ export function Scanner() {
     let stream: MediaStream | null = null
     let rafId: number | null = null
     let html5Qrcode: import('html5-qrcode').Html5Qrcode | null = null
+    // Captured once the dynamic import resolves, so stopLibraryInstance() can check
+    // real library state instead of guessing — see stopLibraryInstance() below.
+    let qrcodeStateEnum: typeof import('html5-qrcode').Html5QrcodeScannerState | null = null
+
+    // html5-qrcode's stop() throws SYNCHRONOUSLY ("Cannot stop, scanner is not
+    // running or paused.") when the instance is still NOT_STARTED — which is the
+    // case for the whole time start()'s camera-acquisition promise is in flight,
+    // and forever if start() rejects (permission denied / no camera). Its clear()
+    // does the mirror-image thing: it throws unless the instance IS NOT_STARTED.
+    // So the two calls are only ever safe in this order, gated by state:
+    //   - state === NOT_STARTED  -> clear() only (stop() would throw)
+    //   - state !== NOT_STARTED  -> stop() then clear() in .finally()
+    // Every branch is additionally wrapped in try/catch as defense in depth
+    // against a state flip racing the check itself.
+    function stopLibraryInstance(instance: import('html5-qrcode').Html5Qrcode) {
+      const notStarted = qrcodeStateEnum?.NOT_STARTED
+      let state: number | undefined
+      try {
+        state = instance.getState()
+      } catch {
+        state = undefined
+      }
+      const isActive = state !== undefined && state !== notStarted
+
+      const safeClear = () => {
+        try {
+          instance.clear()
+        } catch {
+          // Element may already be gone, or state shifted underneath us — nothing
+          // left to tear down either way.
+        }
+      }
+
+      if (!isActive) {
+        safeClear()
+        return
+      }
+      try {
+        instance.stop().catch(() => {}).finally(safeClear)
+      } catch {
+        // stop() itself can still throw synchronously if state flips between the
+        // getState() check above and this call.
+        safeClear()
+      }
+    }
 
     function cleanup() {
       if (rafId !== null) {
@@ -50,10 +95,7 @@ export function Scanner() {
       if (html5Qrcode) {
         const instance = html5Qrcode
         html5Qrcode = null
-        instance
-          .stop()
-          .catch(() => {})
-          .finally(() => instance.clear())
+        stopLibraryInstance(instance)
       }
     }
 
@@ -108,17 +150,28 @@ export function Scanner() {
     }
 
     async function startLibrary() {
-      const { Html5Qrcode } = await import('html5-qrcode')
+      const mod = await import('html5-qrcode')
+      qrcodeStateEnum = mod.Html5QrcodeScannerState
       if (cancelled) return
-      setMode('library')
-      const instance = new Html5Qrcode(SCAN_REGION_ID)
+      const instance = new mod.Html5Qrcode(SCAN_REGION_ID)
       html5Qrcode = instance
+      setMode('library')
       await instance.start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: 250 },
         (decodedText) => handleDecoded(decodedText),
         () => {},
       )
+      // start() has now resolved and the instance is SCANNING. If we were torn
+      // down while start() was still in flight, the cleanup() call above already
+      // ran and found the instance NOT_STARTED (so it only cleared, correctly
+      // skipping stop() to avoid the synchronous throw) — meaning the camera
+      // that just finished starting is still live with nothing to stop it.
+      // Finish that teardown now that stop() is actually safe to call.
+      if (cancelled) {
+        html5Qrcode = null
+        stopLibraryInstance(instance)
+      }
     }
 
     async function start() {
