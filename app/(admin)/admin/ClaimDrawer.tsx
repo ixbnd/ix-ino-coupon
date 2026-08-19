@@ -32,6 +32,7 @@ export function ClaimDrawer({
   const [bill, setBill] = useState((claim.billTotalCents / 100).toFixed(2))
   const [confirmingVoid, setConfirmingVoid] = useState(false)
   const [voidPending, startVoidTransition] = useTransition()
+  const [voidError, setVoidError] = useState<string | null>(null)
 
   // A successful amend resolves to {} (no `error` key) — close the drawer so the refreshed
   // week table (revalidatePath('/admin')) is what the admin sees next.
@@ -117,6 +118,7 @@ export function ClaimDrawer({
         </form>
 
         <div className="mt-auto border-t border-black/10 pt-4 dark:border-white/10">
+          {voidError ? <p className="mb-3 text-sm text-red-600 dark:text-red-400">{voidError}</p> : null}
           {confirmingVoid ? (
             <div className="flex flex-col gap-2">
               <p className="text-sm text-zinc-700 dark:text-zinc-300">Void this claim? This can&apos;t be undone from here.</p>
@@ -126,8 +128,13 @@ export function ClaimDrawer({
                   disabled={voidPending}
                   onClick={() =>
                     startVoidTransition(async () => {
-                      await voidClaim(claim.id)
-                      onClose()
+                      const result = await voidClaim(claim.id)
+                      if (result?.error) {
+                        setVoidError(result.error)
+                        setConfirmingVoid(false)
+                      } else {
+                        onClose()
+                      }
                     })
                   }
                   className="flex-1 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
@@ -147,7 +154,10 @@ export function ClaimDrawer({
           ) : (
             <button
               type="button"
-              onClick={() => setConfirmingVoid(true)}
+              onClick={() => {
+                setVoidError(null)
+                setConfirmingVoid(true)
+              }}
               className="w-full rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
             >
               Void claim

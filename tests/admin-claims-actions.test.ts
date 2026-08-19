@@ -111,6 +111,23 @@ describe('amendClaim', () => {
     expect(row.billTotalCents).toBe(1000)
     expect(row.amendedBy).toBeNull()
   })
+
+  it('refuses to amend an already-voided claim (second tab / stale POST / concurrent admin) and changes nothing', async () => {
+    const admin = await makeEmployee('CLM-0025', 'admin')
+    const emp = await makeEmployee('CLM-0026')
+    const claim = await makeClaim(emp.id)
+    await loginAs(admin)
+
+    await voidClaim(claim.id)
+    const result = await amendClaim(claim.id, null, formData({ bill: '22.50' }))
+    expect(result).toEqual({ error: 'Claim not found or already voided.' })
+
+    const [row] = await db.select().from(claims).where(eq(claims.id, claim.id))
+    expect(row.billTotalCents).toBe(1000) // unchanged
+    expect(row.amendedBy).toBeNull() // never amended
+    expect(row.amendedAt).toBeNull()
+    expect(row.voided).toBe(true) // still voided
+  })
 })
 
 describe('voidClaim', () => {
@@ -160,5 +177,28 @@ describe('voidClaim', () => {
     const [row] = await db.select().from(claims).where(eq(claims.id, claim.id))
     expect(row.voided).toBe(false)
     expect(row.voidedBy).toBeNull()
+  })
+
+  it('refuses a second void and keeps the FIRST admin\'s voidedBy/voidedAt', async () => {
+    const firstAdmin = await makeEmployee('CLM-0050', 'admin')
+    const secondAdmin = await makeEmployee('CLM-0051', 'admin')
+    const emp = await makeEmployee('CLM-0052')
+    const claim = await makeClaim(emp.id)
+
+    await loginAs(firstAdmin)
+    const first = await voidClaim(claim.id)
+    expect(first).toEqual({})
+
+    const [afterFirst] = await db.select().from(claims).where(eq(claims.id, claim.id))
+    expect(afterFirst.voidedBy).toBe(firstAdmin.id)
+    const firstVoidedAt = afterFirst.voidedAt
+
+    await loginAs(secondAdmin)
+    const second = await voidClaim(claim.id)
+    expect(second).toEqual({ error: 'Claim already voided.' })
+
+    const [afterSecond] = await db.select().from(claims).where(eq(claims.id, claim.id))
+    expect(afterSecond.voidedBy).toBe(firstAdmin.id) // not overwritten by the second admin
+    expect(afterSecond.voidedAt).toEqual(firstVoidedAt) // timestamp untouched
   })
 })
