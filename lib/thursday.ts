@@ -19,6 +19,11 @@ export function nextThursdayYmd(now: Date, tz = DEFAULT_TZ()): string {
   while (weekdayOfYmd(d) !== 4) d = addDaysYmd(d, 1)
   return d
 }
+export function currentWeekThursday(now: Date, tz = DEFAULT_TZ()): string {
+  const ymd = localYmd(now, tz)
+  const daysSinceMonday = (weekdayOfYmd(ymd) + 6) % 7 // Mon=0 ... Sun=6
+  return addDaysYmd(ymd, 3 - daysSinceMonday)
+}
 export function thursdaysInMonth(year: number, month: number): string[] {
   const out: string[] = []
   let d = `${year}-${String(month).padStart(2, '0')}-01`

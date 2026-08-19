@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { localYmd, isThursday, nextThursdayYmd, thursdaysInMonth, formatYmdLong, localHm } from './thursday'
+import { localYmd, isThursday, nextThursdayYmd, currentWeekThursday, thursdaysInMonth, formatYmdLong, localHm } from './thursday'
 const TZ = 'Asia/Brunei'
 
 describe('thursday', () => {
@@ -16,6 +16,13 @@ describe('thursday', () => {
   it('finds next Thursday strictly after today', () => {
     expect(nextThursdayYmd(new Date('2026-08-19T04:00:00Z'), TZ)).toBe('2026-08-20') // from Wed
     expect(nextThursdayYmd(new Date('2026-08-20T04:00:00Z'), TZ)).toBe('2026-08-27') // from Thu
+  })
+  it('finds the Thursday of the current Mon-Sun week', () => {
+    expect(currentWeekThursday(new Date('2026-08-19T04:00:00Z'), TZ)).toBe('2026-08-20') // Wed 19 Aug
+    expect(currentWeekThursday(new Date('2026-08-20T04:00:00Z'), TZ)).toBe('2026-08-20') // Thu 20 Aug
+    expect(currentWeekThursday(new Date('2026-08-21T04:00:00Z'), TZ)).toBe('2026-08-20') // Fri 21 Aug
+    expect(currentWeekThursday(new Date('2026-08-23T04:00:00Z'), TZ)).toBe('2026-08-20') // Sun 23 Aug
+    expect(currentWeekThursday(new Date('2026-08-24T04:00:00Z'), TZ)).toBe('2026-08-27') // Mon 24 Aug
   })
   it('lists all Thursdays of a month', () => {
     expect(thursdaysInMonth(2026, 8)).toEqual(['2026-08-06', '2026-08-13', '2026-08-20', '2026-08-27'])
