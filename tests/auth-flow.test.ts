@@ -111,6 +111,27 @@ describe('login action', () => {
     expect(digest.split(';')[2]).toBe('/admin')
   })
 
+  // Browsers resolve a leading '/\\' as protocol-relative — new URL('/\\evil.com', origin).href
+  // is 'https://evil.com/' — so a next value starting with '/' but containing a backslash must be
+  // rejected the same as an explicit '//evil.com'.
+  it('ignores a backslash-variant next and falls back to the role default (/scan)', async () => {
+    await db.insert(employees).values({
+      employeeId: 'ABC-0008',
+      name: 'Backslash Variant',
+      role: 'employee',
+      passwordHash: await hashPassword('correct-pw'),
+      mustChangePassword: false,
+    })
+    let caught: unknown
+    try {
+      await login(null, formData({ employeeId: 'ABC-0008', password: 'correct-pw', next: '/\\evil.com' }))
+    } catch (err) {
+      caught = err
+    }
+    const digest = (caught as { digest?: string }).digest ?? ''
+    expect(digest.split(';')[2]).toBe('/scan')
+  })
+
   it('rate-limits login attempts per employee ID after 10 failures', async () => {
     await db.insert(employees).values({
       employeeId: 'RLT-0001',

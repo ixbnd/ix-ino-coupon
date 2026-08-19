@@ -19,8 +19,13 @@ export async function login(_prev: { error?: string } | null, formData: FormData
   if (!emp || !emp.active || !(await verifyPassword(emp.passwordHash, password))) return { error: GENERIC }
   await setSessionCookie({ pk: emp.id, role: emp.role, tv: emp.tokenVersion, mcp: emp.mustChangePassword })
   if (emp.mustChangePassword) redirect('/change-password')
-  // next='/' means "no real destination was requested" (e.g. login reached via the bare root
-  // path) — fall through to the role default instead of bouncing back through "/" itself.
-  const hasDestination = next.startsWith('/') && !next.startsWith('//') && next !== '/'
-  redirect(hasDestination ? next : emp.role === 'admin' ? '/admin' : '/scan')
+  // Only a same-origin, single-leading-slash path counts as a real destination:
+  //   - next.startsWith('//') would resolve as protocol-relative (redirects off-site)
+  //   - next.includes('\\') admits backslash variants like '/\\evil.com', which browsers
+  //     resolve as '//evil.com' (i.e. protocol-relative) even though the string itself passes
+  //     the leading-slash check — verified: new URL('/\\evil.com', origin).href
+  //   - next === '/' means "no real destination was requested" (e.g. login reached via the bare
+  //     root path) — fall through to the role default instead of bouncing back through '/' itself
+  const safeNext = next.startsWith('/') && !next.startsWith('//') && !next.includes('\\') && next !== '/' ? next : null
+  redirect(safeNext ?? (emp.role === 'admin' ? '/admin' : '/scan'))
 }
