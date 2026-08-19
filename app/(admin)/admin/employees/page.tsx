@@ -1,11 +1,21 @@
 import { asc } from 'drizzle-orm'
 import { db } from '@/lib/db/client'
 import { employees } from '@/lib/db/schema'
+import { requireAdmin } from '@/lib/auth/session'
 import { AddEmployee } from './AddEmployee'
 import { EmployeeActions } from './EmployeeActions'
 
 export default async function EmployeesPage() {
-  const roster = await db.query.employees.findMany({ orderBy: asc(employees.employeeId) })
+  // Page segments render independently of the (admin) layout, so the layout's requireAdmin()
+  // alone does not gate this route — see app/(admin)/admin/page.tsx for the same fix.
+  await requireAdmin()
+  // Narrow columns even though this table is only ever rendered server-side (passwordHash/
+  // tokenVersion never reach a client component here) — defense in depth against a future
+  // change accidentally passing `roster` rows into a client component.
+  const roster = await db.query.employees.findMany({
+    orderBy: asc(employees.employeeId),
+    columns: { id: true, employeeId: true, name: true, role: true, active: true, createdAt: true },
+  })
 
   return (
     <div>
@@ -33,7 +43,10 @@ export default async function EmployeesPage() {
                 <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{emp.role}</td>
                 <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{emp.active ? 'Yes' : 'No'}</td>
                 <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
-                  {new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(emp.createdAt)}
+                  {new Intl.DateTimeFormat('en-GB', {
+                    dateStyle: 'medium',
+                    timeZone: process.env.APP_TIMEZONE ?? 'Asia/Brunei',
+                  }).format(emp.createdAt)}
                 </td>
                 <td className="px-4 py-3">
                   <EmployeeActions employeePk={emp.id} employeeId={emp.employeeId} active={emp.active} />

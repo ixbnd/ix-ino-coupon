@@ -3,6 +3,7 @@ import { rangeSummary, claimCountsByDate } from '@/lib/admin-queries'
 import { thursdaysInMonth, localYmd, lastDayOfMonthYmd } from '@/lib/thursday'
 import { formatCents } from '@/lib/money'
 import { isValidMonth } from '@/lib/admin-validation'
+import { requireAdmin } from '@/lib/auth/session'
 import { ScopeNav } from '../ScopeNav'
 import { stepLinkClass, thClass, tdClass, chipClass } from '../adminStyles'
 
@@ -20,6 +21,9 @@ function formatShortDay(ymd: string): string {
 }
 
 export default async function AdminMonthPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
+  // Page segments render independently of the (admin) layout, so the layout's requireAdmin()
+  // alone does not gate this route — see app/(admin)/admin/page.tsx for the same fix.
+  await requireAdmin()
   const { month } = await searchParams
   const now = new Date()
   const currentMonth = localYmd(now).slice(0, 7)

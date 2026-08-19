@@ -13,5 +13,6 @@ export function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`
 }
 export function capCents(): number {
-  return Number(process.env.CLAIM_CAP_CENTS ?? 1500)
+  const n = Number(process.env.CLAIM_CAP_CENTS ?? 1500)
+  return Number.isInteger(n) && n > 0 ? n : 1500
 }

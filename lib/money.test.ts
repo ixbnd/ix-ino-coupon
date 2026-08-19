@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { coveredCents, excessCents, parseBillToCents, formatCents } from './money'
+import { describe, it, expect, afterEach } from 'vitest'
+import { coveredCents, excessCents, parseBillToCents, formatCents, capCents } from './money'
 
 describe('money', () => {
   it('covers min(bill, cap)', () => {
@@ -26,5 +26,34 @@ describe('money', () => {
   it('formats cents', () => {
     expect(formatCents(1850)).toBe('$18.50')
     expect(formatCents(0)).toBe('$0.00')
+  })
+
+  describe('capCents', () => {
+    const ORIGINAL = process.env.CLAIM_CAP_CENTS
+    afterEach(() => {
+      if (ORIGINAL === undefined) delete process.env.CLAIM_CAP_CENTS
+      else process.env.CLAIM_CAP_CENTS = ORIGINAL
+    })
+
+    it('reads a valid positive integer from the env', () => {
+      process.env.CLAIM_CAP_CENTS = '2000'
+      expect(capCents()).toBe(2000)
+    })
+    it('falls back to 1500 when unset', () => {
+      delete process.env.CLAIM_CAP_CENTS
+      expect(capCents()).toBe(1500)
+    })
+    it('falls back to 1500 on a typo/non-numeric value instead of returning NaN', () => {
+      process.env.CLAIM_CAP_CENTS = 'fifteen-hundred'
+      expect(capCents()).toBe(1500)
+    })
+    it('falls back to 1500 on a non-positive or non-integer value', () => {
+      process.env.CLAIM_CAP_CENTS = '-100'
+      expect(capCents()).toBe(1500)
+      process.env.CLAIM_CAP_CENTS = '0'
+      expect(capCents()).toBe(1500)
+      process.env.CLAIM_CAP_CENTS = '1500.5'
+      expect(capCents()).toBe(1500)
+    })
   })
 })

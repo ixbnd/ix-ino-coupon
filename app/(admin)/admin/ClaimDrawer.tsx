@@ -2,17 +2,20 @@
 import { useActionState, useEffect, useState, useTransition } from 'react'
 import { amendClaim, voidClaim } from './claim-actions'
 import { coveredCents, excessCents, formatCents, parseBillToCents } from '@/lib/money'
-import { formatYmdLong, localHm } from '@/lib/thursday'
 
-type DrawerEmployee = { id: number; employeeId: string; name: string }
-type DrawerClaim = {
+export type DrawerEmployee = { id: number; employeeId: string; name: string }
+// Time/date strings are precomputed server-side (see admin/page.tsx, lib/thursday.ts) and passed
+// in as plain strings rather than Dates — localHm()/formatYmdLong() default to
+// process.env.APP_TIMEZONE, which is undefined in the browser, so formatting must happen on the
+// server where that env var is actually set.
+export type DrawerClaim = {
   id: number
-  claimDate: string
-  claimedAt: Date
   billTotalCents: number
   capCents: number
-  amendedBy: number | null
-  amendedAt: Date | null
+  timeHm: string
+  thursdayLabel: string
+  amended: boolean
+  amendedLabel: string | null
 }
 
 const inputClass =
@@ -69,9 +72,9 @@ export function ClaimDrawer({
 
         <dl className="mb-6 grid grid-cols-2 gap-y-2 text-sm">
           <dt className="text-zinc-500 dark:text-zinc-400">Thursday</dt>
-          <dd className="text-right text-zinc-950 dark:text-zinc-50">{formatYmdLong(claim.claimDate)}</dd>
+          <dd className="text-right text-zinc-950 dark:text-zinc-50">{claim.thursdayLabel}</dd>
           <dt className="text-zinc-500 dark:text-zinc-400">Claimed at</dt>
-          <dd className="text-right text-zinc-950 dark:text-zinc-50">{localHm(claim.claimedAt)}</dd>
+          <dd className="text-right text-zinc-950 dark:text-zinc-50">{claim.timeHm}</dd>
           <dt className="text-zinc-500 dark:text-zinc-400">Covered</dt>
           <dd className="text-right text-zinc-950 dark:text-zinc-50">
             {formatCents(coveredCents(claim.billTotalCents, claim.capCents))}
@@ -80,12 +83,10 @@ export function ClaimDrawer({
           <dd className="text-right text-zinc-950 dark:text-zinc-50">
             {formatCents(excessCents(claim.billTotalCents, claim.capCents))}
           </dd>
-          {claim.amendedAt ? (
+          {claim.amendedLabel ? (
             <>
               <dt className="text-zinc-500 dark:text-zinc-400">Amended</dt>
-              <dd className="text-right text-amber-700 dark:text-amber-400">
-                {localHm(claim.amendedAt)} by admin #{claim.amendedBy}
-              </dd>
+              <dd className="text-right text-amber-700 dark:text-amber-400">{claim.amendedLabel}</dd>
             </>
           ) : null}
         </dl>

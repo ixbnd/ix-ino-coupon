@@ -58,14 +58,14 @@ describe('buildWorkbook', () => {
   it('writes a bold header, numeric money cells with the dollar format, and a bold totals row', async () => {
     const rows = mapWeekRows([
       {
-        employee: { id: 1, employeeId: 'XLS-0001', name: 'Ada', role: 'employee', passwordHash: 'x', mustChangePassword: false, tokenVersion: 0, active: true, createdAt: new Date() },
+        employee: { id: 1, employeeId: 'XLS-0001', name: 'Ada' },
         claim: {
           id: 1, employeePk: 1, claimDate: YMD, claimedAt: new Date('2026-08-20T04:00:00Z'), billTotalCents: 1850, capCents: 1500,
           voided: false, amendedBy: null, amendedAt: null, voidedBy: null, voidedAt: null,
         },
       },
       {
-        employee: { id: 2, employeeId: 'XLS-0002', name: 'Bo', role: 'employee', passwordHash: 'x', mustChangePassword: false, tokenVersion: 0, active: true, createdAt: new Date() },
+        employee: { id: 2, employeeId: 'XLS-0002', name: 'Bo' },
         claim: null,
       },
     ])
@@ -96,8 +96,8 @@ describe('buildWorkbook', () => {
 
   it('sums month/year aggregate rows into a totals row', async () => {
     const rows = mapSummaryRows([
-      { employee: { id: 1, employeeId: 'XLS-0010', name: 'Ada', role: 'employee', passwordHash: 'x', mustChangePassword: false, tokenVersion: 0, active: true, createdAt: new Date() }, claimCount: 2, billCents: 4000, coveredCents: 3000, excessCents: 1000 },
-      { employee: { id: 2, employeeId: 'XLS-0011', name: 'Bo', role: 'employee', passwordHash: 'x', mustChangePassword: false, tokenVersion: 0, active: true, createdAt: new Date() }, claimCount: 1, billCents: 1000, coveredCents: 1000, excessCents: 0 },
+      { employee: { id: 1, employeeId: 'XLS-0010', name: 'Ada', active: true }, claimCount: 2, billCents: 4000, coveredCents: 3000, excessCents: 1000 },
+      { employee: { id: 2, employeeId: 'XLS-0011', name: 'Bo', active: true }, claimCount: 1, billCents: 1000, coveredCents: 1000, excessCents: 0 },
     ])
 
     const buffer = await buildWorkbook('month', '2026-08', rows)

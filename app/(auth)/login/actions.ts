@@ -19,5 +19,8 @@ export async function login(_prev: { error?: string } | null, formData: FormData
   if (!emp || !emp.active || !(await verifyPassword(emp.passwordHash, password))) return { error: GENERIC }
   await setSessionCookie({ pk: emp.id, role: emp.role, tv: emp.tokenVersion, mcp: emp.mustChangePassword })
   if (emp.mustChangePassword) redirect('/change-password')
-  redirect(next.startsWith('/') && !next.startsWith('//') ? next : emp.role === 'admin' ? '/admin' : '/scan')
+  // next='/' means "no real destination was requested" (e.g. login reached via the bare root
+  // path) — fall through to the role default instead of bouncing back through "/" itself.
+  const hasDestination = next.startsWith('/') && !next.startsWith('//') && next !== '/'
+  redirect(hasDestination ? next : emp.role === 'admin' ? '/admin' : '/scan')
 }

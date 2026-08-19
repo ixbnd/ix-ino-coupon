@@ -23,7 +23,7 @@ describe('weekRows / voidedRows', () => {
     const claimed = await makeEmployee('WKQ-0001')
     const voidedEmp = await makeEmployee('WKQ-0002')
     const unclaimed = await makeEmployee('WKQ-0003')
-    await makeEmployee('WKQ-0004', false) // inactive — excluded from weekRows
+    await makeEmployee('WKQ-0004', false) // inactive, no claim that Thursday — stays hidden
 
     await db.insert(claims).values({
       employeePk: claimed.id, claimDate: YMD, billTotalCents: 1000, capCents: 1500,
@@ -45,6 +45,26 @@ describe('weekRows / voidedRows', () => {
     expect(voided[0].employee.employeeId).toBe('WKQ-0002')
     expect(voided[0].claim.billTotalCents).toBe(2000)
   })
+
+  it('still surfaces a claim filed by an employee who was later deactivated', async () => {
+    const deactivatedAfterClaim = await makeEmployee('WKQ-0010') // active when claim is filed
+    await db.insert(claims).values({
+      employeePk: deactivatedAfterClaim.id, claimDate: YMD, billTotalCents: 1200, capCents: 1500,
+    })
+    // Deactivate after the claim exists — must not erase the claim from this Thursday's view.
+    await db.update(employees).set({ active: false }).where(sql`${employees.id} = ${deactivatedAfterClaim.id}`)
+
+    const rows = await weekRows(YMD)
+    expect(rows).toHaveLength(1)
+    expect(rows[0].employee.employeeId).toBe('WKQ-0010')
+    expect(rows[0].claim?.billTotalCents).toBe(1200)
+  })
+
+  it('does not surface an inactive employee with no claim that Thursday', async () => {
+    await makeEmployee('WKQ-0020', false)
+    const rows = await weekRows(YMD)
+    expect(rows).toHaveLength(0)
+  })
 })
 
 describe('rangeSummary', () => {
@@ -53,7 +73,7 @@ describe('rangeSummary', () => {
     const under = await makeEmployee('MTH-0002') // two under-cap claims, two Thursdays
     const voidedEmp = await makeEmployee('MTH-0003') // sole claim is voided
     const noClaims = await makeEmployee('MTH-0004') // active, no claims at all
-    await makeEmployee('MTH-0005', false) // inactive — excluded from rangeSummary entirely
+    await makeEmployee('MTH-0005', false) // inactive, no claims in range — stays hidden
 
     const thu1 = '2026-08-06'
     const thu2 = '2026-08-13'
@@ -92,6 +112,29 @@ describe('rangeSummary', () => {
     expect(zeroRow.billCents).toBe(0)
     expect(zeroRow.coveredCents).toBe(0)
     expect(zeroRow.excessCents).toBe(0)
+  })
+
+  it('still includes a claim from an employee deactivated after filing it, but hides a deactivated employee with no claims in range', async () => {
+    const deactivatedWithClaim = await makeEmployee('MTH-0006') // active when the claim is filed
+    const deactivatedNoClaims = await makeEmployee('MTH-0007')
+
+    await db.insert(claims).values({
+      employeePk: deactivatedWithClaim.id, claimDate: '2026-08-06', billTotalCents: 1000, capCents: 1500,
+    })
+
+    // Deactivate both after the fact — must not retroactively erase the claim from month/year
+    // summaries and exports, but an inactive employee with zero claims in range stays hidden.
+    await db.update(employees).set({ active: false }).where(sql`${employees.id} = ${deactivatedWithClaim.id}`)
+    await db.update(employees).set({ active: false }).where(sql`${employees.id} = ${deactivatedNoClaims.id}`)
+
+    const rows = await rangeSummary('2026-08-01', '2026-08-31')
+    const ids = rows.map((r) => r.employee.employeeId)
+    expect(ids).toContain('MTH-0006')
+    expect(ids).not.toContain('MTH-0007')
+
+    const row = rows.find((r) => r.employee.id === deactivatedWithClaim.id)!
+    expect(row.claimCount).toBe(1)
+    expect(row.billCents).toBe(1000)
   })
 })
 

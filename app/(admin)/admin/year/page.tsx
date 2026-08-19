@@ -3,12 +3,16 @@ import { rangeSummary, claimCountsByDate } from '@/lib/admin-queries'
 import { thursdaysInMonth, localYmd } from '@/lib/thursday'
 import { formatCents } from '@/lib/money'
 import { isValidYear } from '@/lib/admin-validation'
+import { requireAdmin } from '@/lib/auth/session'
 import { ScopeNav } from '../ScopeNav'
 import { stepLinkClass, thClass, tdClass, chipClass } from '../adminStyles'
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 export default async function AdminYearPage({ searchParams }: { searchParams: Promise<{ year?: string }> }) {
+  // Page segments render independently of the (admin) layout, so the layout's requireAdmin()
+  // alone does not gate this route — see app/(admin)/admin/page.tsx for the same fix.
+  await requireAdmin()
   const { year } = await searchParams
   const now = new Date()
   const currentYear = localYmd(now).slice(0, 4)

@@ -1,18 +1,20 @@
 'use client'
 import { useState } from 'react'
-import { ClaimDrawer } from './ClaimDrawer'
+import { ClaimDrawer, type DrawerEmployee, type DrawerClaim } from './ClaimDrawer'
 import { AmendedTag } from './AmendedTag'
 import { thClass, tdClass } from './adminStyles'
 import { coveredCents, excessCents, formatCents } from '@/lib/money'
-import { localHm } from '@/lib/thursday'
-import type { employees, claims } from '@/lib/db/schema'
 
-type Employee = typeof employees.$inferSelect
-type Claim = typeof claims.$inferSelect
-type Row = { employee: Employee; claim: Claim | null }
+// Narrow, display-only shapes — NOT typeof employees.$inferSelect / typeof claims.$inferSelect.
+// The full employees row carries passwordHash/tokenVersion; since this is a client component,
+// whatever shape `rows` has gets serialized into the page's RSC flight payload and shipped to
+// the browser, so only the fields actually rendered may appear here. Time/date strings are
+// precomputed server-side (see admin/page.tsx) rather than formatted here, so no timezone logic
+// needs to run client-side.
+export type Row = { employee: DrawerEmployee; claim: DrawerClaim | null }
 
 export function ClaimsTable({ rows }: { rows: Row[] }) {
-  const [selected, setSelected] = useState<{ employee: Employee; claim: Claim } | null>(null)
+  const [selected, setSelected] = useState<{ employee: DrawerEmployee; claim: DrawerClaim } | null>(null)
 
   const claimedRows = rows.filter((r) => r.claim !== null)
   const totalCovered = claimedRows.reduce((sum, r) => sum + coveredCents(r.claim!.billTotalCents, r.claim!.capCents), 0)
@@ -60,9 +62,9 @@ export function ClaimsTable({ rows }: { rows: Row[] }) {
               <td className={`${tdClass} text-zinc-950 dark:text-zinc-50`}>{employee.name}</td>
               <td className={`${tdClass} text-zinc-700 dark:text-zinc-300`}>
                 {claim ? '✓' : '—'}
-                {claim?.amendedAt ? <AmendedTag /> : null}
+                {claim?.amended ? <AmendedTag /> : null}
               </td>
-              <td className={`${tdClass} text-zinc-700 dark:text-zinc-300`}>{claim ? localHm(claim.claimedAt) : '—'}</td>
+              <td className={`${tdClass} text-zinc-700 dark:text-zinc-300`}>{claim ? claim.timeHm : '—'}</td>
               <td className={`${tdClass} text-zinc-700 dark:text-zinc-300`}>{claim ? formatCents(claim.billTotalCents) : '—'}</td>
               <td className={`${tdClass} text-zinc-700 dark:text-zinc-300`}>
                 {claim ? formatCents(coveredCents(claim.billTotalCents, claim.capCents)) : '—'}
