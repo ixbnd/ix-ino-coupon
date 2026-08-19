@@ -279,4 +279,30 @@ describe('changePassword action', () => {
     const fresh = await requireDbSession()
     expect(fresh?.session.tv).toBe(oldTv + 1)
   })
+
+  it('rejects a revoked (stale token_version) session cookie and leaves the password unchanged', async () => {
+    const [emp] = await db.insert(employees).values({
+      employeeId: 'CPW-0006',
+      name: 'Revoked Session',
+      role: 'employee',
+      passwordHash: await hashPassword('temp-pw'),
+      mustChangePassword: true,
+    }).returning()
+    // Sign a cookie at the current tv, then bump the DB row's tv underneath it (simulating an
+    // admin-triggered password reset / revocation) so the cookie is now stale.
+    cookieStore.set(SESSION_COOKIE, { value: await signSessionToken({ pk: emp.id, role: emp.role, tv: emp.tokenVersion, mcp: true }) })
+    await db.update(employees).set({ tokenVersion: sql`${employees.tokenVersion} + 1` }).where(eq(employees.id, emp.id))
+
+    let caught: unknown
+    try {
+      await changePassword(null, formData({ password: 'new-password-1', confirm: 'new-password-1' }))
+    } catch (err) {
+      caught = err
+    }
+    const digest = (caught as { digest?: string }).digest ?? ''
+    expect(digest).toMatch(/^NEXT_REDIRECT;.*\/login/)
+
+    const [row] = await db.select().from(employees).where(eq(employees.id, emp.id))
+    expect(row.passwordHash).toBe(emp.passwordHash)
+  })
 })
