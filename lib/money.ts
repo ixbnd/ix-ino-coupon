@@ -12,3 +12,6 @@ export function parseBillToCents(input: string): number | null {
 export function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`
 }
+export function capCents(): number {
+  return Number(process.env.CLAIM_CAP_CENTS ?? 1500)
+}

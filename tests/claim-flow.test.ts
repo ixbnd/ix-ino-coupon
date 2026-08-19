@@ -125,4 +125,20 @@ describe('submitClaim', () => {
     const result = await submitClaim(null, formData({ t: 'wrong-token', bill: '18.50' }))
     expect(result).toEqual({ error: 'Invalid coupon code' })
   })
+
+  it('rejects a submission when the server clock is not Thursday, and inserts no row', async () => {
+    const emp = await loginAs('CLM-0008')
+    const WED_NOON = new Date('2026-08-19T04:00:00Z') // Wed 12:00 Asia/Brunei
+    // Scoped to this test only: other tests in this file rely on the file-wide fake
+    // "Thursday now" set in beforeAll, so restore it afterward rather than going real.
+    vi.setSystemTime(WED_NOON)
+    try {
+      const result = await submitClaim(null, formData({ t: TOKEN, bill: '18.50' }))
+      expect(result).toEqual({ error: 'Claims are only open on Thursdays.' })
+      const rows = await db.select().from(claims).where(eq(claims.employeePk, emp.id))
+      expect(rows).toHaveLength(0)
+    } finally {
+      vi.setSystemTime(THU_NOON)
+    }
+  })
 })

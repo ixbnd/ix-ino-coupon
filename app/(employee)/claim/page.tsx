@@ -4,7 +4,7 @@ import { requireDbSession } from '@/lib/auth/session'
 import { resolveClaimState } from '@/lib/claim'
 import { db } from '@/lib/db/client'
 import { claims } from '@/lib/db/schema'
-import { coveredCents, excessCents, formatCents } from '@/lib/money'
+import { coveredCents, excessCents, formatCents, capCents } from '@/lib/money'
 import { formatYmdLong, localHm } from '@/lib/thursday'
 import { BillForm } from './BillForm'
 
@@ -19,10 +19,10 @@ function Card({ children }: { children: React.ReactNode }) {
 }
 
 export default async function ClaimPage({ searchParams }: { searchParams: Promise<{ t?: string }> }) {
-  const auth = await requireDbSession()
-  if (!auth) redirect('/login?next=/claim')
-
   const { t } = await searchParams
+  const auth = await requireDbSession()
+  if (!auth) redirect(`/login?next=${encodeURIComponent(`/claim${t ? `?t=${t}` : ''}`)}`)
+
   const state = resolveClaimState(t, new Date())
 
   if (state.kind === 'bad_token') {
@@ -43,7 +43,7 @@ export default async function ClaimPage({ searchParams }: { searchParams: Promis
     )
   }
 
-  const capCents = Number(process.env.CLAIM_CAP_CENTS ?? 1500)
+  const cap = capCents()
 
   const existing = await db.query.claims.findFirst({
     where: and(eq(claims.employeePk, auth.employee.id), eq(claims.claimDate, state.claimDate), eq(claims.voided, false)),
@@ -75,7 +75,7 @@ export default async function ClaimPage({ searchParams }: { searchParams: Promis
 
   return (
     <Card>
-      <BillForm t={t ?? ''} capCents={capCents} />
+      <BillForm t={t ?? ''} capCents={cap} />
     </Card>
   )
 }

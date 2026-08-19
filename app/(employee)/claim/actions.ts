@@ -3,7 +3,7 @@ import { db } from '@/lib/db/client'
 import { claims } from '@/lib/db/schema'
 import { requireDbSession } from '@/lib/auth/session'
 import { resolveClaimState } from '@/lib/claim'
-import { parseBillToCents } from '@/lib/money'
+import { parseBillToCents, capCents } from '@/lib/money'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 
@@ -18,7 +18,7 @@ export async function submitClaim(_prev: { error?: string } | null, formData: Fo
   try {
     await db.insert(claims).values({
       employeePk: auth.employee.id, claimDate: state.claimDate,
-      billTotalCents: cents, capCents: Number(process.env.CLAIM_CAP_CENTS ?? 1500),
+      billTotalCents: cents, capCents: capCents(),
     })
   } catch (e: unknown) {
     const code = (e as { cause?: { code?: string } }).cause?.code ?? (e as { code?: string }).code
