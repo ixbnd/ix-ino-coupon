@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { db } from '@/lib/db/client'
 import { employees } from '@/lib/db/schema'
 import { hashPassword } from '@/lib/auth/password'
-import { verifySessionToken } from '@/lib/auth/token'
+import { verifySessionToken, signSessionToken, SESSION_COOKIE } from '@/lib/auth/token'
+import { requireDbSession } from '@/lib/auth/session'
 
 const { cookieStore } = vi.hoisted(() => ({ cookieStore: new Map<string, { value: string }>() }))
 
@@ -20,6 +21,7 @@ vi.mock('next/headers', () => ({
 }))
 
 const { login } = await import('@/app/(auth)/login/actions')
+const { changePassword } = await import('@/app/(auth)/change-password/actions')
 
 beforeEach(async () => {
   cookieStore.clear()
@@ -170,5 +172,111 @@ describe('login action', () => {
     expect(cookie).toBeDefined()
     const payload = await verifySessionToken(cookie!.value)
     expect(payload).toEqual({ pk: emp.id, role: 'admin', tv: emp.tokenVersion, mcp: false })
+  })
+})
+
+describe('changePassword action', () => {
+  it('rejects a password shorter than 8 characters', async () => {
+    const [emp] = await db.insert(employees).values({
+      employeeId: 'CPW-0001',
+      name: 'Needs Change',
+      passwordHash: await hashPassword('temp-pw'),
+      mustChangePassword: true,
+    }).returning()
+    cookieStore.set(SESSION_COOKIE, { value: await signSessionToken({ pk: emp.id, role: emp.role, tv: emp.tokenVersion, mcp: true }) })
+
+    const result = await changePassword(null, formData({ password: 'short1', confirm: 'short1' }))
+    expect(result).toEqual({ error: 'Password must be at least 8 characters.' })
+  })
+
+  it('rejects when the confirmation does not match', async () => {
+    const [emp] = await db.insert(employees).values({
+      employeeId: 'CPW-0002',
+      name: 'Needs Change',
+      passwordHash: await hashPassword('temp-pw'),
+      mustChangePassword: true,
+    }).returning()
+    cookieStore.set(SESSION_COOKIE, { value: await signSessionToken({ pk: emp.id, role: emp.role, tv: emp.tokenVersion, mcp: true }) })
+
+    const result = await changePassword(null, formData({ password: 'longenough1', confirm: 'different1' }))
+    expect(result).toEqual({ error: 'Passwords do not match.' })
+  })
+
+  it('happy path: bumps token_version, clears mustChangePassword, and redirects an employee to /scan with a fresh cookie', async () => {
+    const [emp] = await db.insert(employees).values({
+      employeeId: 'CPW-0003',
+      name: 'Needs Change',
+      role: 'employee',
+      passwordHash: await hashPassword('temp-pw'),
+      mustChangePassword: true,
+    }).returning()
+    const oldTv = emp.tokenVersion
+    cookieStore.set(SESSION_COOKIE, { value: await signSessionToken({ pk: emp.id, role: emp.role, tv: oldTv, mcp: true }) })
+
+    let caught: unknown
+    try {
+      await changePassword(null, formData({ password: 'new-password-1', confirm: 'new-password-1' }))
+    } catch (err) {
+      caught = err
+    }
+    const digest = (caught as { digest?: string }).digest ?? ''
+    expect(digest.split(';')[2]).toBe('/scan')
+
+    const [updated] = await db.select().from(employees).where(eq(employees.id, emp.id))
+    expect(updated.mustChangePassword).toBe(false)
+    expect(updated.tokenVersion).toBe(oldTv + 1)
+
+    const cookie = cookieStore.get(SESSION_COOKIE)
+    expect(cookie).toBeDefined()
+    const payload = await verifySessionToken(cookie!.value)
+    expect(payload).toEqual({ pk: emp.id, role: 'employee', tv: oldTv + 1, mcp: false })
+  })
+
+  it('happy path: redirects an admin to /admin', async () => {
+    const [emp] = await db.insert(employees).values({
+      employeeId: 'CPW-0004',
+      name: 'Needs Change',
+      role: 'admin',
+      passwordHash: await hashPassword('temp-pw'),
+      mustChangePassword: true,
+    }).returning()
+    cookieStore.set(SESSION_COOKIE, { value: await signSessionToken({ pk: emp.id, role: emp.role, tv: emp.tokenVersion, mcp: true }) })
+
+    let caught: unknown
+    try {
+      await changePassword(null, formData({ password: 'new-password-1', confirm: 'new-password-1' }))
+    } catch (err) {
+      caught = err
+    }
+    const digest = (caught as { digest?: string }).digest ?? ''
+    expect(digest.split(';')[2]).toBe('/admin')
+  })
+
+  it('invalidates sessions signed with the pre-change token_version', async () => {
+    const [emp] = await db.insert(employees).values({
+      employeeId: 'CPW-0005',
+      name: 'Needs Change',
+      role: 'employee',
+      passwordHash: await hashPassword('temp-pw'),
+      mustChangePassword: true,
+    }).returning()
+    const oldTv = emp.tokenVersion
+    cookieStore.set(SESSION_COOKIE, { value: await signSessionToken({ pk: emp.id, role: emp.role, tv: oldTv, mcp: true }) })
+
+    try {
+      await changePassword(null, formData({ password: 'new-password-1', confirm: 'new-password-1' }))
+    } catch {
+      // expected redirect
+    }
+
+    // A session token still carrying the pre-change token_version must be rejected.
+    cookieStore.set(SESSION_COOKIE, { value: await signSessionToken({ pk: emp.id, role: emp.role, tv: oldTv, mcp: true }) })
+    const stale = await requireDbSession()
+    expect(stale).toBeNull()
+
+    // The fresh cookie set by the action itself must still be valid.
+    cookieStore.set(SESSION_COOKIE, { value: await signSessionToken({ pk: emp.id, role: emp.role, tv: oldTv + 1, mcp: false }) })
+    const fresh = await requireDbSession()
+    expect(fresh?.session.tv).toBe(oldTv + 1)
   })
 })
