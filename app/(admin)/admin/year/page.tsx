@@ -2,16 +2,11 @@ import Link from 'next/link'
 import { rangeSummary, claimCountsByDate } from '@/lib/admin-queries'
 import { thursdaysInMonth, localYmd } from '@/lib/thursday'
 import { formatCents } from '@/lib/money'
+import { isValidYear } from '@/lib/admin-validation'
 import { ScopeNav } from '../ScopeNav'
 import { stepLinkClass, thClass, tdClass, chipClass } from '../adminStyles'
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-function isValidYear(year: string | undefined): year is string {
-  if (!year || !/^\d{4}$/.test(year)) return false
-  const y = Number(year)
-  return y >= 2000 && y <= 2100
-}
 
 export default async function AdminYearPage({ searchParams }: { searchParams: Promise<{ year?: string }> }) {
   const { year } = await searchParams
@@ -56,16 +51,21 @@ export default async function AdminYearPage({ searchParams }: { searchParams: Pr
         <ScopeNav active="year" />
       </div>
 
-      <div className="mb-4 flex items-center gap-4 text-sm">
-        <Link href={`/admin/year?year=${prev}`} className={stepLinkClass}>
-          ◀
-        </Link>
-        <span className="font-medium text-zinc-950 dark:text-zinc-50">{current}</span>
-        {canGoNext ? (
-          <Link href={`/admin/year?year=${next}`} className={stepLinkClass}>
-            ▶
+      <div className="mb-4 flex items-center justify-between gap-4 text-sm">
+        <div className="flex items-center gap-4">
+          <Link href={`/admin/year?year=${prev}`} className={stepLinkClass}>
+            ◀
           </Link>
-        ) : null}
+          <span className="font-medium text-zinc-950 dark:text-zinc-50">{current}</span>
+          {canGoNext ? (
+            <Link href={`/admin/year?year=${next}`} className={stepLinkClass}>
+              ▶
+            </Link>
+          ) : null}
+        </div>
+        <a href={`/api/export?scope=year&year=${current}`} className={stepLinkClass}>
+          Export .xlsx
+        </a>
       </div>
 
       <div className="mb-6 flex flex-wrap gap-2">

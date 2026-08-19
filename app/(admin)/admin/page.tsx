@@ -1,15 +1,12 @@
 import Link from 'next/link'
 import { weekRows, voidedRows } from '@/lib/admin-queries'
-import { currentWeekThursday, addDaysYmd, weekdayOfYmd, formatYmdLong, localHm } from '@/lib/thursday'
+import { currentWeekThursday, addDaysYmd, formatYmdLong, localHm } from '@/lib/thursday'
 import { coveredCents, excessCents, formatCents } from '@/lib/money'
+import { isValidThursdayYmd } from '@/lib/admin-validation'
 import { ScopeNav } from './ScopeNav'
 import { AmendedTag } from './AmendedTag'
 import { ClaimsTable } from './ClaimsTable'
 import { stepLinkClass, thClass, tdClass } from './adminStyles'
-
-function isValidThursdayYmd(date: string | undefined): date is string {
-  return !!date && /^\d{4}-\d{2}-\d{2}$/.test(date) && weekdayOfYmd(date) === 4
-}
 
 export default async function AdminClaimsPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
   const { date } = await searchParams
@@ -30,16 +27,21 @@ export default async function AdminClaimsPage({ searchParams }: { searchParams: 
         <ScopeNav active="week" />
       </div>
 
-      <div className="mb-4 flex items-center gap-4 text-sm">
-        <Link href={`/admin?date=${prev}`} className={stepLinkClass}>
-          ◀
-        </Link>
-        <span className="font-medium text-zinc-950 dark:text-zinc-50">{formatYmdLong(current)}</span>
-        {canGoNext ? (
-          <Link href={`/admin?date=${next}`} className={stepLinkClass}>
-            ▶
+      <div className="mb-4 flex items-center justify-between gap-4 text-sm">
+        <div className="flex items-center gap-4">
+          <Link href={`/admin?date=${prev}`} className={stepLinkClass}>
+            ◀
           </Link>
-        ) : null}
+          <span className="font-medium text-zinc-950 dark:text-zinc-50">{formatYmdLong(current)}</span>
+          {canGoNext ? (
+            <Link href={`/admin?date=${next}`} className={stepLinkClass}>
+              ▶
+            </Link>
+          ) : null}
+        </div>
+        <a href={`/api/export?scope=week&date=${current}`} className={stepLinkClass}>
+          Export .xlsx
+        </a>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">

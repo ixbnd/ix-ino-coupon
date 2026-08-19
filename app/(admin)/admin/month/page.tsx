@@ -1,18 +1,11 @@
 import Link from 'next/link'
 import { rangeSummary, claimCountsByDate } from '@/lib/admin-queries'
-import { thursdaysInMonth, localYmd } from '@/lib/thursday'
+import { thursdaysInMonth, localYmd, lastDayOfMonthYmd } from '@/lib/thursday'
 import { formatCents } from '@/lib/money'
+import { isValidMonth } from '@/lib/admin-validation'
 import { ScopeNav } from '../ScopeNav'
 import { stepLinkClass, thClass, tdClass, chipClass } from '../adminStyles'
 
-function isValidMonth(month: string | undefined): month is string {
-  if (!month || !/^\d{4}-\d{2}$/.test(month)) return false
-  const m = Number(month.slice(5, 7))
-  return m >= 1 && m <= 12
-}
-function lastDayOfMonthYmd(year: number, month: number): string {
-  return new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10) // day 0 of next month = last day of this one
-}
 function shiftMonth(ym: string, delta: number): string {
   const [y, m] = ym.split('-').map(Number)
   const d = new Date(Date.UTC(y, m - 1 + delta, 1))
@@ -64,16 +57,21 @@ export default async function AdminMonthPage({ searchParams }: { searchParams: P
         <ScopeNav active="month" />
       </div>
 
-      <div className="mb-4 flex items-center gap-4 text-sm">
-        <Link href={`/admin/month?month=${prev}`} className={stepLinkClass}>
-          ◀
-        </Link>
-        <span className="font-medium text-zinc-950 dark:text-zinc-50">{formatMonthLong(current)}</span>
-        {canGoNext ? (
-          <Link href={`/admin/month?month=${next}`} className={stepLinkClass}>
-            ▶
+      <div className="mb-4 flex items-center justify-between gap-4 text-sm">
+        <div className="flex items-center gap-4">
+          <Link href={`/admin/month?month=${prev}`} className={stepLinkClass}>
+            ◀
           </Link>
-        ) : null}
+          <span className="font-medium text-zinc-950 dark:text-zinc-50">{formatMonthLong(current)}</span>
+          {canGoNext ? (
+            <Link href={`/admin/month?month=${next}`} className={stepLinkClass}>
+              ▶
+            </Link>
+          ) : null}
+        </div>
+        <a href={`/api/export?scope=month&month=${current}`} className={stepLinkClass}>
+          Export .xlsx
+        </a>
       </div>
 
       {thursdays.length > 0 ? (

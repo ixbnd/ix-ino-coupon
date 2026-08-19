@@ -40,3 +40,6 @@ export function formatYmdLong(ymd: string): string {
 export function localHm(d: Date, tz = DEFAULT_TZ()): string {
   return new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false }).format(d)
 }
+export function lastDayOfMonthYmd(year: number, month: number): string {
+  return new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10) // day 0 of next month = last day of this one
+}
