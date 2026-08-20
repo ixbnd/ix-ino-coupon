@@ -4,6 +4,7 @@ import { coveredCents, excessCents, formatCents } from '@/lib/money'
 import { isValidThursdayYmd } from '@/lib/admin-validation'
 import { requireAdmin } from '@/lib/auth/session'
 import { ViewHeader, PeriodBar } from './ViewChrome'
+import { ExportBar } from './ExportBar'
 import { AmendedTag } from './AmendedTag'
 import { ClaimsTable } from './ClaimsTable'
 import { thClass, tdClass } from './adminStyles'
@@ -49,7 +50,6 @@ export default async function AdminClaimsPage({ searchParams }: { searchParams: 
         label={formatYmdLong(current)}
         prevHref={`/admin?date=${prev}`}
         nextHref={canGoNext ? `/admin?date=${next}` : null}
-        exportHref={`/api/export?scope=week&date=${current}`}
         prevLabel="Previous Thursday"
         nextLabel="Next Thursday"
       />
@@ -96,6 +96,8 @@ export default async function AdminClaimsPage({ searchParams }: { searchParams: 
           </div>
         </div>
       ) : null}
+
+      <ExportBar href={`/api/export?scope=week&date=${current}`} periodLabel={formatYmdLong(current)} />
     </div>
   )
 }

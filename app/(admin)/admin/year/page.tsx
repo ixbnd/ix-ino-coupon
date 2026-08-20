@@ -4,6 +4,7 @@ import { thursdaysInMonth, localYmd } from '@/lib/thursday'
 import { isValidYear } from '@/lib/admin-validation'
 import { requireAdmin } from '@/lib/auth/session'
 import { ViewHeader, PeriodBar } from '../ViewChrome'
+import { ExportBar } from '../ExportBar'
 import { SummaryList } from '../SummaryList'
 import { chipClass } from '../adminStyles'
 
@@ -56,7 +57,6 @@ export default async function AdminYearPage({ searchParams }: { searchParams: Pr
         label={String(current)}
         prevHref={`/admin/year?year=${prev}`}
         nextHref={canGoNext ? `/admin/year?year=${next}` : null}
-        exportHref={`/api/export?scope=year&year=${current}`}
         prevLabel="Previous year"
         nextLabel="Next year"
       />
@@ -78,6 +78,8 @@ export default async function AdminYearPage({ searchParams }: { searchParams: Pr
           countLabel={`Total ${totals.claims} claims`}
         />
       </div>
+
+      <ExportBar href={`/api/export?scope=year&year=${current}`} periodLabel={String(current)} />
     </div>
   )
 }

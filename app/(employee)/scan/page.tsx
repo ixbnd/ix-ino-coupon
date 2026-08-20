@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
 import { requireDbSession } from '@/lib/auth/session'
 import { Scanner } from './Scanner'
-import { Card, CenteredPage, TextLink } from '@/components/ui'
+import { Card, CenteredPage } from '@/components/ui'
+import { EmployeeFooter } from '@/components/employee-footer'
 import { Wordmark } from '@/components/wordmark'
 
 export default async function ScanPage() {
@@ -23,11 +24,7 @@ export default async function ScanPage() {
         </p>
       </Card>
 
-      <p className="mt-6 flex items-center justify-center gap-4 text-sm">
-        <TextLink href="/history">My claim history</TextLink>
-        <span aria-hidden="true" className="text-fg-subtle">·</span>
-        <TextLink href="/change-password">Change password</TextLink>
-      </p>
+      <EmployeeFooter link={{ href: '/history', label: 'My claim history' }} />
     </CenteredPage>
   )
 }

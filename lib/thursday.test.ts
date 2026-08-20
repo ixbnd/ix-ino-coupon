@@ -29,6 +29,11 @@ describe('thursday', () => {
   })
   it('formats', () => {
     expect(formatYmdLong('2026-08-20')).toBe('Thu, 20 Aug 2026')
-    expect(localHm(new Date('2026-08-20T04:14:00Z'), TZ)).toBe('12:14')
+    expect(localHm(new Date('2026-08-20T04:14:00Z'), TZ)).toBe('12:14 pm')
+    expect(localHm(new Date('2026-08-20T06:14:00Z'), TZ)).toBe('2:14 pm')
+    expect(localHm(new Date('2026-08-20T01:05:00Z'), TZ)).toBe('9:05 am')
+    // Midnight and noon are the two the 12-hour clock gets wrong most often.
+    expect(localHm(new Date('2026-08-19T16:00:00Z'), TZ)).toBe('12:00 am')
+    expect(localHm(new Date('2026-08-20T04:00:00Z'), TZ)).toBe('12:00 pm')
   })
 })

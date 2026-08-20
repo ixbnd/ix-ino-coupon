@@ -7,7 +7,8 @@ import { claims } from '@/lib/db/schema'
 import { coveredCents, excessCents, formatCents, capCents } from '@/lib/money'
 import { formatYmdLong, localHm } from '@/lib/thursday'
 import { BillForm } from './BillForm'
-import { Card, CenteredPage, TextLink } from '@/components/ui'
+import { Card, CenteredPage } from '@/components/ui'
+import { EmployeeFooter } from '@/components/employee-footer'
 import { Wordmark } from '@/components/wordmark'
 
 function Screen({ children }: { children: React.ReactNode }) {
@@ -17,9 +18,7 @@ function Screen({ children }: { children: React.ReactNode }) {
         <Wordmark size="sm" />
       </div>
       <Card>{children}</Card>
-      <p className="mt-6 text-center text-sm">
-        <TextLink href="/history">My claim history</TextLink>
-      </p>
+      <EmployeeFooter link={{ href: '/history', label: 'My claim history' }} />
     </CenteredPage>
   )
 }

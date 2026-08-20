@@ -1,4 +1,4 @@
-import { and, eq, asc, desc, gte, lte, sum, count, sql } from 'drizzle-orm'
+import { and, eq, ne, or, asc, desc, gte, lte, sum, count, sql } from 'drizzle-orm'
 import { db } from '@/lib/db/client'
 import { employees, claims } from '@/lib/db/schema'
 
@@ -10,21 +10,30 @@ import { employees, claims } from '@/lib/db/schema'
 // selection narrow everywhere an employee row flows toward a client component.
 const employeeCols = { id: employees.id, employeeId: employees.employeeId, name: employees.name }
 
+// Admin accounts are operator logins, not coupon recipients — they are never entitled to a
+// claim, so a permanent "not claimed" row for them only inflates the denominator and makes
+// participation look worse than it is. They stay in the roster (where they are managed) and
+// out of every claim view, export and total. An admin row already carrying a claim (e.g. the
+// role was granted after the fact) is still shown, so no history silently disappears.
+const isRecipient = eq(employees.role, 'employee')
+
 export async function weekRows(ymd: string) {
   // Active employees, one row each, left-joined to their (non-voided) claim for the date.
   const active = await db.select({ employee: employeeCols, claim: claims }).from(employees)
     .leftJoin(claims, and(eq(claims.employeePk, employees.id), eq(claims.claimDate, ymd), eq(claims.voided, false)))
-    .where(eq(employees.active, true))
+    .where(and(eq(employees.active, true), isRecipient))
     .orderBy(asc(employees.employeeId))
 
   // Deactivating an employee must not retroactively erase a claim they filed while active from
   // that Thursday's view — so also pull in any inactive employee who has a live claim that date.
-  const inactiveWithClaim = await db.select({ employee: employeeCols, claim: claims }).from(employees)
+  // Anyone with a live claim that date who was not already listed above: deactivated staff, and
+  // admins who do hold a claim. Both must keep appearing so no history vanishes from a report.
+  const otherWithClaim = await db.select({ employee: employeeCols, claim: claims }).from(employees)
     .innerJoin(claims, and(eq(claims.employeePk, employees.id), eq(claims.claimDate, ymd), eq(claims.voided, false)))
-    .where(eq(employees.active, false))
+    .where(or(eq(employees.active, false), ne(employees.role, 'employee')))
     .orderBy(asc(employees.employeeId))
 
-  return [...active, ...inactiveWithClaim].sort((a, b) => a.employee.employeeId.localeCompare(b.employee.employeeId))
+  return [...active, ...otherWithClaim].sort((a, b) => a.employee.employeeId.localeCompare(b.employee.employeeId))
 }
 export async function voidedRows(ymd: string) {
   return db.select({ employee: employeeCols, claim: claims }).from(claims)
@@ -41,7 +50,7 @@ function normalizeCents(v: number | null): number {
 
 export async function rangeSummary(fromYmd: string, toYmd: string) {
   const rows = await db.select({
-    employee: { ...employeeCols, active: employees.active },
+    employee: { ...employeeCols, active: employees.active, isRecipient: sql<boolean>`${employees.role} = 'employee'` },
     claimCount: count(claims.id),
     billCents: sum(claims.billTotalCents).mapWith(Number),
     coveredCents: sum(sql`LEAST(${claims.billTotalCents}, ${claims.capCents})`).mapWith(Number),
@@ -55,7 +64,7 @@ export async function rangeSummary(fromYmd: string, toYmd: string) {
   // summaries and exports — keep any row that is either still active or has at least one
   // non-voided claim in range; a since-deactivated employee with zero claims in range stays hidden.
   return rows
-    .filter((r) => r.employee.active || r.claimCount > 0)
+    .filter((r) => (r.employee.isRecipient && r.employee.active) || r.claimCount > 0)
     .map((r) => ({
       ...r,
       billCents: normalizeCents(r.billCents),

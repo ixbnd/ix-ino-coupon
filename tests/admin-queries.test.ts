@@ -156,3 +156,48 @@ describe('claimCountsByDate', () => {
     expect(byDate['2026-09-03']).toBeUndefined() // outside the range
   })
 })
+
+describe('admin accounts in claim reporting', () => {
+  async function makeAdmin(employeeId: string) {
+    const [emp] = await db.insert(employees).values({
+      employeeId, name: `Admin ${employeeId}`, passwordHash: 'x', role: 'admin',
+    }).returning()
+    return emp
+  }
+
+  it('leaves admin accounts out of the week list and its denominator', async () => {
+    const staff = await makeEmployee('ADX-0001')
+    await makeAdmin('ADX-0002')
+    await db.insert(claims).values({
+      employeePk: staff.id, claimDate: '2026-08-20', billTotalCents: 1500, capCents: 1500,
+    })
+
+    const rows = await weekRows('2026-08-20')
+
+    expect(rows.map((r) => r.employee.employeeId)).toEqual(['ADX-0001'])
+  })
+
+  it('leaves admin accounts out of range summaries', async () => {
+    await makeEmployee('ADX-0003')
+    await makeAdmin('ADX-0004')
+
+    const summary = await rangeSummary('2026-08-01', '2026-08-31')
+
+    expect(summary.map((r) => r.employee.employeeId)).toEqual(['ADX-0003'])
+  })
+
+  it('still shows an admin who actually holds a claim, so no history disappears', async () => {
+    const admin = await makeAdmin('ADX-0005')
+    await db.insert(claims).values({
+      employeePk: admin.id, claimDate: '2026-08-20', billTotalCents: 1800, capCents: 1500,
+    })
+
+    const rows = await weekRows('2026-08-20')
+    const summary = await rangeSummary('2026-08-01', '2026-08-31')
+
+    expect(rows.map((r) => r.employee.employeeId)).toEqual(['ADX-0005'])
+    expect(rows[0].claim?.billTotalCents).toBe(1800)
+    expect(summary.map((r) => r.employee.employeeId)).toEqual(['ADX-0005'])
+    expect(summary[0].claimCount).toBe(1)
+  })
+})

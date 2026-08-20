@@ -4,6 +4,7 @@ import { thursdaysInMonth, localYmd, lastDayOfMonthYmd } from '@/lib/thursday'
 import { isValidMonth } from '@/lib/admin-validation'
 import { requireAdmin } from '@/lib/auth/session'
 import { ViewHeader, PeriodBar } from '../ViewChrome'
+import { ExportBar } from '../ExportBar'
 import { SummaryList } from '../SummaryList'
 import { chipClass } from '../adminStyles'
 
@@ -62,7 +63,6 @@ export default async function AdminMonthPage({ searchParams }: { searchParams: P
         label={formatMonthLong(current)}
         prevHref={`/admin/month?month=${prev}`}
         nextHref={canGoNext ? `/admin/month?month=${next}` : null}
-        exportHref={`/api/export?scope=month&month=${current}`}
         prevLabel="Previous month"
         nextLabel="Next month"
       />
@@ -86,6 +86,8 @@ export default async function AdminMonthPage({ searchParams }: { searchParams: P
           countLabel={`Total ${totals.claims} claims`}
         />
       </div>
+
+      <ExportBar href={`/api/export?scope=month&month=${current}`} periodLabel={formatMonthLong(current)} />
     </div>
   )
 }

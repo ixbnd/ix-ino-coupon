@@ -54,20 +54,18 @@ export function PeriodBar({
   label,
   prevHref,
   nextHref,
-  exportHref,
   prevLabel,
   nextLabel,
 }: {
   label: string
   prevHref: string
   nextHref: string | null
-  exportHref: string
   prevLabel: string
   nextLabel: string
 }) {
   return (
-    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-2">
+    <div className="mb-4 flex items-center gap-2">
+      <div className="flex flex-1 items-center gap-2">
         <Link href={prevHref} aria-label={prevLabel} className={STEP}>
           ◀
         </Link>
@@ -81,13 +79,6 @@ export function PeriodBar({
           <span aria-hidden="true" className={`${STEP} pointer-events-none opacity-0`} />
         )}
       </div>
-
-      <a
-        href={exportHref}
-        className="flex min-h-11 items-center justify-center rounded-lg border border-border-strong bg-surface px-4 text-sm font-medium text-fg transition-colors hover:bg-surface-muted sm:min-h-9"
-      >
-        Export .xlsx
-      </a>
     </div>
   )
 }

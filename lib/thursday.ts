@@ -37,8 +37,17 @@ export function formatYmdLong(ymd: string): string {
   return new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
     .format(new Date(`${ymd}T00:00:00Z`)).replace(/^(\w+) /, '$1, ')
 }
+// 12-hour with a lowercase meridiem: "2:14 pm". en-GB gives "14:14" and en-US
+// gives "2:14 PM", so build it from parts to get exactly one house format.
 export function localHm(d: Date, tz = DEFAULT_TZ()): string {
-  return new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false }).format(d)
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).formatToParts(d)
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? ''
+  return `${get('hour')}:${get('minute')} ${get('dayPeriod').toLowerCase()}`
 }
 export function lastDayOfMonthYmd(year: number, month: number): string {
   return new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10) // day 0 of next month = last day of this one

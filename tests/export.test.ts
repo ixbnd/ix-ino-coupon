@@ -96,8 +96,8 @@ describe('buildWorkbook', () => {
 
   it('sums month/year aggregate rows into a totals row', async () => {
     const rows = mapSummaryRows([
-      { employee: { id: 1, employeeId: 'XLS-0010', name: 'Ada', active: true }, claimCount: 2, billCents: 4000, coveredCents: 3000, excessCents: 1000 },
-      { employee: { id: 2, employeeId: 'XLS-0011', name: 'Bo', active: true }, claimCount: 1, billCents: 1000, coveredCents: 1000, excessCents: 0 },
+      { employee: { id: 1, employeeId: 'XLS-0010', name: 'Ada', active: true, isRecipient: true }, claimCount: 2, billCents: 4000, coveredCents: 3000, excessCents: 1000 },
+      { employee: { id: 2, employeeId: 'XLS-0011', name: 'Bo', active: true, isRecipient: true }, claimCount: 1, billCents: 1000, coveredCents: 1000, excessCents: 0 },
     ])
 
     const buffer = await buildWorkbook('month', '2026-08', rows)

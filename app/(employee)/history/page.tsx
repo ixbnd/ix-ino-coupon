@@ -3,7 +3,8 @@ import { requireDbSession } from '@/lib/auth/session'
 import { ownClaimHistory } from '@/lib/admin-queries'
 import { coveredCents, excessCents, formatCents } from '@/lib/money'
 import { formatYmdLong, localHm } from '@/lib/thursday'
-import { Card, CenteredPage, EmptyState, TextLink } from '@/components/ui'
+import { Card, CenteredPage, EmptyState } from '@/components/ui'
+import { EmployeeFooter } from '@/components/employee-footer'
 import { Wordmark } from '@/components/wordmark'
 
 export default async function HistoryPage() {
@@ -76,9 +77,7 @@ export default async function HistoryPage() {
         )}
       </Card>
 
-      <p className="mt-6 text-center text-sm">
-        <TextLink href="/scan">Back to scanner</TextLink>
-      </p>
+      <EmployeeFooter link={{ href: '/scan', label: 'Back to scanner' }} />
     </CenteredPage>
   )
 }
