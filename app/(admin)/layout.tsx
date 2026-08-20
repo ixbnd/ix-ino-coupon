@@ -29,6 +29,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               Employees
             </Link>
           </nav>
+          <a href="/change-password" className="mr-4 text-sm text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200">
+            Change password
+          </a>
           <form action={logout}>
             <button
               type="submit"

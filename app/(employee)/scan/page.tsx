@@ -14,6 +14,11 @@ export default async function ScanPage() {
         <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
           You can also scan the poster with your phone&apos;s own camera app.
         </p>
+        <p className="mt-2 text-sm">
+          <a href="/change-password" className="text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200">
+            Change password
+          </a>
+        </p>
       </div>
     </div>
   )

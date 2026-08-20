@@ -1,0 +1,2 @@
+ALTER TABLE "employees" DROP CONSTRAINT "employee_id_format";--> statement-breakpoint
+ALTER TABLE "employees" ADD CONSTRAINT "employee_id_format" CHECK ("employees"."employee_id" ~ '^[A-Z]{2,3}-[0-9]{4}$');

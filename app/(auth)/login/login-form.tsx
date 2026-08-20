@@ -2,6 +2,7 @@
 import { useActionState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { login } from './actions'
+import { formatEmployeeIdInput } from '@/lib/employee-id'
 
 export function LoginForm() {
   const [state, formAction, pending] = useActionState(login, null)
@@ -26,10 +27,10 @@ export function LoginForm() {
           required
           autoCapitalize="characters"
           autoComplete="username"
-          pattern="[A-Za-z]{3}-[0-9]{4}"
+          pattern="[A-Za-z]{2,3}-[0-9]{4}"
           placeholder="ABC-0001"
           onInput={(e) => {
-            e.currentTarget.value = e.currentTarget.value.toUpperCase()
+            e.currentTarget.value = formatEmployeeIdInput(e.currentTarget.value)
           }}
           className="w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
         />

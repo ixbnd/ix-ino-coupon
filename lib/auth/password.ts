@@ -1,7 +1,7 @@
 import { hash, verify } from '@node-rs/argon2'
 import { randomInt } from 'node:crypto'
 
-export const EMPLOYEE_ID_RE = /^[A-Z]{3}-[0-9]{4}$/
+export const EMPLOYEE_ID_RE = /^[A-Z]{2,3}-[0-9]{4}$/
 
 const CHARSET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789' // no 0/O/1/I/L
 export function generateTempPassword(): string {

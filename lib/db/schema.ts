@@ -12,7 +12,7 @@ export const employees = pgTable('employees', {
   active: boolean('active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
-  check('employee_id_format', sql`${t.employeeId} ~ '^[A-Z]{3}-[0-9]{4}$'`),
+  check('employee_id_format', sql`${t.employeeId} ~ '^[A-Z]{2,3}-[0-9]{4}$'`),
 ])
 
 export const claims = pgTable('claims', {

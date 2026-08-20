@@ -87,10 +87,10 @@ export default async function AdminYearPage({ searchParams }: { searchParams: Pr
             <tr className="border-b border-black/10 text-xs uppercase tracking-wide text-zinc-500 dark:border-white/10 dark:text-zinc-400">
               <th className={thClass}>Employee ID</th>
               <th className={thClass}>Name</th>
-              <th className={thClass}>Thursdays claimed</th>
-              <th className={thClass}>Bill</th>
-              <th className={thClass}>Covered</th>
-              <th className={thClass}>Excess</th>
+              <th className={thClass}>Coupons claimed</th>
+              <th className={thClass}>Total Bill</th>
+              <th className={thClass}>Total Covered</th>
+              <th className={thClass}>Total Excess</th>
             </tr>
           </thead>
           <tbody>

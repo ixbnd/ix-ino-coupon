@@ -63,7 +63,7 @@ export function mapSummaryRows(rows: Awaited<ReturnType<typeof rangeSummary>>): 
 }
 
 const WEEK_COLUMNS = ['Employee ID', 'Name', 'Claimed', 'Time', 'Bill', 'Covered', 'Excess']
-const SUMMARY_COLUMNS = ['Employee ID', 'Name', 'Claim Count', 'Bill', 'Covered', 'Excess']
+const SUMMARY_COLUMNS = ['Employee ID', 'Name', 'Coupons Claimed', 'Total Bill', 'Total Covered', 'Total Excess']
 
 export async function buildWorkbook(scope: ExportScope, label: string, rows: ExportRow[]): Promise<Buffer> {
   const wb = new ExcelJS.Workbook()

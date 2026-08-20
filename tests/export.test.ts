@@ -104,7 +104,7 @@ describe('buildWorkbook', () => {
     const sheet = await reopen(buffer)
 
     const headerRow = sheet.getRow(2)
-    expect(headerRow.getCell(3).text).toBe('Claim Count')
+    expect(headerRow.getCell(3).text).toBe('Coupons Claimed')
 
     const totalsRow = sheet.getRow(5)
     expect(totalsRow.getCell(4).value).toBe(50) // bill total: 40 + 10
