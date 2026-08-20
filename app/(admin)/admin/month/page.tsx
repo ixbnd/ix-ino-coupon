@@ -57,7 +57,7 @@ export default async function AdminMonthPage({ searchParams }: { searchParams: P
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-zinc-950 dark:text-zinc-50">Claims</h1>
+        <h1 className="text-xl font-semibold text-fg">Claims</h1>
         <ScopeNav active="month" />
       </div>
 
@@ -66,7 +66,7 @@ export default async function AdminMonthPage({ searchParams }: { searchParams: P
           <Link href={`/admin/month?month=${prev}`} className={stepLinkClass}>
             ◀
           </Link>
-          <span className="font-medium text-zinc-950 dark:text-zinc-50">{formatMonthLong(current)}</span>
+          <span className="font-medium text-fg">{formatMonthLong(current)}</span>
           {canGoNext ? (
             <Link href={`/admin/month?month=${next}`} className={stepLinkClass}>
               ▶
@@ -83,16 +83,16 @@ export default async function AdminMonthPage({ searchParams }: { searchParams: P
           {thursdays.map((t) => (
             <Link key={t} href={`/admin?date=${t}`} className={chipClass}>
               {formatShortDay(t)}
-              <span className="text-zinc-400 dark:text-zinc-500">{countByDate.get(t) ?? 0}</span>
+              <span className="text-fg-subtle">{countByDate.get(t) ?? 0}</span>
             </Link>
           ))}
         </div>
       ) : null}
 
-      <div className="overflow-x-auto rounded-lg border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
+      <div className="overflow-x-auto rounded-card border border-border bg-surface shadow-card">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-black/10 text-xs uppercase tracking-wide text-zinc-500 dark:border-white/10 dark:text-zinc-400">
+            <tr className="border-b border-border text-xs font-semibold uppercase tracking-wide text-fg-muted">
               <th className={thClass}>Employee ID</th>
               <th className={thClass}>Name</th>
               <th className={thClass}>Coupons claimed</th>
@@ -103,27 +103,27 @@ export default async function AdminMonthPage({ searchParams }: { searchParams: P
           </thead>
           <tbody>
             {summary.map((r) => (
-              <tr key={r.employee.id} className="border-b border-black/5 last:border-0 dark:border-white/5">
-                <td className={`${tdClass} font-mono text-zinc-950 dark:text-zinc-50`}>{r.employee.employeeId}</td>
-                <td className={`${tdClass} text-zinc-950 dark:text-zinc-50`}>{r.employee.name}</td>
-                <td className={`${tdClass} text-zinc-700 dark:text-zinc-300`}>
+              <tr key={r.employee.id} className="border-b border-border/70 last:border-0">
+                <td className={`${tdClass} font-mono text-fg`}>{r.employee.employeeId}</td>
+                <td className={`${tdClass} text-fg`}>{r.employee.name}</td>
+                <td className={`${tdClass} text-fg`}>
                   {r.claimCount} / {elapsed}
                 </td>
-                <td className={`${tdClass} text-zinc-700 dark:text-zinc-300`}>{formatCents(r.billCents)}</td>
-                <td className={`${tdClass} text-zinc-700 dark:text-zinc-300`}>{formatCents(r.coveredCents)}</td>
-                <td className={`${tdClass} text-zinc-700 dark:text-zinc-300`}>{formatCents(r.excessCents)}</td>
+                <td className={`${tdClass} text-fg`}>{formatCents(r.billCents)}</td>
+                <td className={`${tdClass} text-fg`}>{formatCents(r.coveredCents)}</td>
+                <td className={`${tdClass} text-fg`}>{formatCents(r.excessCents)}</td>
               </tr>
             ))}
             {summary.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-zinc-500 dark:text-zinc-400">
+                <td colSpan={6} className="px-4 py-6 text-center text-fg-muted">
                   No active employees.
                 </td>
               </tr>
             ) : null}
           </tbody>
           <tfoot>
-            <tr className="border-t border-black/10 text-sm font-semibold text-zinc-950 dark:border-white/10 dark:text-zinc-50">
+            <tr className="border-t-2 border-border-strong bg-surface-muted text-sm font-semibold text-fg">
               <td className={tdClass} colSpan={3}>
                 Total {totals.claims} claims
               </td>

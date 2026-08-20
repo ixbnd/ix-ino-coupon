@@ -158,7 +158,16 @@ export function Scanner() {
       setMode('library')
       await instance.start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: 250 },
+        // A fixed pixel qrbox gets clamped to the video's short side, which is
+        // what turns the library's own corner overlay into a rectangle on phones.
+        // Derive a square from whatever the feed actually is instead.
+        {
+          fps: 10,
+          qrbox: (viewW: number, viewH: number) => {
+            const side = Math.round(Math.min(viewW, viewH) * 0.72)
+            return { width: side, height: side }
+          },
+        },
         (decodedText) => handleDecoded(decodedText),
         () => {},
       )
@@ -198,7 +207,7 @@ export function Scanner() {
 
   return (
     <div>
-      <div className="relative aspect-square w-full overflow-hidden rounded-md bg-zinc-900">
+      <div className="relative aspect-square w-full overflow-hidden rounded-card bg-black">
         <video
           ref={videoRef}
           className={mode === 'native' ? 'h-full w-full object-cover' : 'hidden'}
@@ -207,9 +216,30 @@ export function Scanner() {
         />
         {/* Always mounted (even off-mode) so html5-qrcode finds the element by id when it initializes. */}
         <div id={SCAN_REGION_ID} className={mode === 'library' ? 'h-full w-full' : 'hidden'} />
+
+        {/* Our own viewfinder, drawn for both decode paths so they look identical.
+            QR codes are square, so the frame is square: a square target stops
+            people angling the phone to fill a rectangle. */}
+        {mode === 'native' || mode === 'library' ? (
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div className="relative aspect-square w-[72%]">
+              {[
+                'top-0 left-0 border-t-3 border-l-3 rounded-tl-lg',
+                'top-0 right-0 border-t-3 border-r-3 rounded-tr-lg',
+                'bottom-0 left-0 border-b-3 border-l-3 rounded-bl-lg',
+                'bottom-0 right-0 border-b-3 border-r-3 rounded-br-lg',
+              ].map((corner) => (
+                <span
+                  key={corner}
+                  className={`absolute h-8 w-8 border-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] ${corner}`}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
-      {error ? <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-      {hint ? <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">{hint}</p> : null}
+      {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
+      {hint ? <p className="mt-3 text-sm text-fg-muted">{hint}</p> : null}
     </div>
   )
 }

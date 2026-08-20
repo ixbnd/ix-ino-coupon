@@ -24,7 +24,7 @@ export function ClaimsTable({ rows }: { rows: Row[] }) {
     <>
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b border-black/10 text-xs uppercase tracking-wide text-zinc-500 dark:border-white/10 dark:text-zinc-400">
+          <tr className="border-b border-border text-xs font-semibold uppercase tracking-wide text-fg-muted">
             <th className={thClass}>Employee ID</th>
             <th className={thClass}>Name</th>
             <th className={thClass}>Claimed</th>
@@ -52,38 +52,55 @@ export function ClaimsTable({ rows }: { rows: Row[] }) {
               role={claim ? 'button' : undefined}
               tabIndex={claim ? 0 : undefined}
               aria-label={claim ? `View claim details for ${employee.name}` : undefined}
-              className={`border-b border-black/5 last:border-0 outline-none dark:border-white/5 ${
+              className={`border-b border-border/70 last:border-0 outline-none ${
                 claim
-                  ? 'cursor-pointer hover:bg-zinc-50 focus-visible:bg-zinc-100 dark:hover:bg-zinc-800/50 dark:focus-visible:bg-zinc-800'
+                  ? 'cursor-pointer transition-colors hover:bg-surface-muted focus-visible:bg-surface-muted'
                   : ''
               }`}
             >
-              <td className={`${tdClass} font-mono text-zinc-950 dark:text-zinc-50`}>{employee.employeeId}</td>
-              <td className={`${tdClass} text-zinc-950 dark:text-zinc-50`}>{employee.name}</td>
-              <td className={`${tdClass} text-zinc-700 dark:text-zinc-300`}>
-                {claim ? '✓' : '—'}
+              <td className={`${tdClass} font-mono text-fg`}>{employee.employeeId}</td>
+              <td className={`${tdClass} text-fg`}>{employee.name}</td>
+              <td className={tdClass}>
+                {claim ? (
+                  <span className="font-semibold text-success" aria-label="Claimed">
+                    ✓
+                  </span>
+                ) : (
+                  <span className="text-fg-subtle" aria-label="Not claimed">
+                    —
+                  </span>
+                )}
                 {claim?.amended ? <AmendedTag /> : null}
               </td>
-              <td className={`${tdClass} text-zinc-700 dark:text-zinc-300`}>{claim ? claim.timeHm : '—'}</td>
-              <td className={`${tdClass} text-zinc-700 dark:text-zinc-300`}>{claim ? formatCents(claim.billTotalCents) : '—'}</td>
-              <td className={`${tdClass} text-zinc-700 dark:text-zinc-300`}>
-                {claim ? formatCents(coveredCents(claim.billTotalCents, claim.capCents)) : '—'}
+              <td className={`${tdClass} tnum`}>
+                {claim ? claim.timeHm : <span className="text-fg-subtle">—</span>}
               </td>
-              <td className={`${tdClass} text-zinc-700 dark:text-zinc-300`}>
-                {claim ? formatCents(excessCents(claim.billTotalCents, claim.capCents)) : '—'}
+              <td className={`${tdClass} tnum`}>
+                {claim ? formatCents(claim.billTotalCents) : <span className="text-fg-subtle">—</span>}
+              </td>
+              <td className={`${tdClass} tnum`}>
+                {claim ? formatCents(coveredCents(claim.billTotalCents, claim.capCents)) : <span className="text-fg-subtle">—</span>}
+              </td>
+              <td className={`${tdClass} tnum`}>
+                {/* Excess is the exception, not the norm — a column of $0.00 reads as noise. */}
+                {claim && excessCents(claim.billTotalCents, claim.capCents) > 0 ? (
+                  formatCents(excessCents(claim.billTotalCents, claim.capCents))
+                ) : (
+                  <span className="text-fg-subtle">—</span>
+                )}
               </td>
             </tr>
           ))}
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={7} className="px-4 py-6 text-center text-zinc-500 dark:text-zinc-400">
+              <td colSpan={7} className="px-4 py-6 text-center text-fg-muted">
                 No active employees.
               </td>
             </tr>
           ) : null}
         </tbody>
         <tfoot>
-          <tr className="border-t border-black/10 text-sm font-semibold text-zinc-950 dark:border-white/10 dark:text-zinc-50">
+          <tr className="border-t-2 border-border-strong bg-surface-muted text-sm font-semibold text-fg">
             <td className={tdClass} colSpan={3}>
               Claimed {claimedRows.length} / {rows.length}
             </td>

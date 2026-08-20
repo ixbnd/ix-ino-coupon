@@ -3,6 +3,8 @@ import { useActionState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { login } from './actions'
 import { formatEmployeeIdInput } from '@/lib/employee-id'
+import { Button, Card, ErrorNote, Field, Input } from '@/components/ui'
+import { Wordmark } from '@/components/wordmark'
 
 export function LoginForm() {
   const [state, formAction, pending] = useActionState(login, null)
@@ -10,54 +12,46 @@ export function LoginForm() {
   const next = searchParams.get('next') ?? ''
 
   return (
-    <form
-      action={formAction}
-      className="w-full max-w-sm rounded-lg border border-black/10 bg-white p-8 shadow-sm dark:border-white/10 dark:bg-zinc-900"
-    >
-      <h1 className="mb-6 text-xl font-semibold text-zinc-950 dark:text-zinc-50">Coupon</h1>
-      <input type="hidden" name="next" value={next} />
-      <div className="mb-4">
-        <label htmlFor="employeeId" className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Employee ID
-        </label>
-        <input
-          id="employeeId"
-          name="employeeId"
-          type="text"
-          required
-          autoCapitalize="characters"
-          autoComplete="username"
-          pattern="[A-Za-z]{2,3}-[0-9]{4}"
-          placeholder="ABC-0001"
-          onInput={(e) => {
-            e.currentTarget.value = formatEmployeeIdInput(e.currentTarget.value)
-          }}
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
-        />
-      </div>
-      <div className="mb-6">
-        <label htmlFor="password" className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Password
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          required
-          autoComplete="current-password"
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
-        />
-      </div>
-      {state?.error ? (
-        <p className="mb-4 text-sm text-red-600 dark:text-red-400">{state.error}</p>
-      ) : null}
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200"
-      >
-        {pending ? 'Signing in…' : 'Sign in'}
-      </button>
-    </form>
+    <Card>
+      <form action={formAction}>
+        <div className="mb-6">
+          <Wordmark />
+          <p className="mt-2 text-sm text-fg-muted">Sign in to claim your Thursday coupon.</p>
+        </div>
+
+        <input type="hidden" name="next" value={next} />
+
+        <Field label="Employee ID" htmlFor="employeeId">
+          <Input
+            id="employeeId"
+            name="employeeId"
+            type="text"
+            required
+            autoCapitalize="characters"
+            autoComplete="username"
+            spellCheck={false}
+            inputMode="text"
+            pattern="[A-Za-z]{2,3}-[0-9]{4}"
+            placeholder="ABC-0001"
+            className="tnum tracking-wide"
+            onInput={(e) => {
+              e.currentTarget.value = formatEmployeeIdInput(e.currentTarget.value)
+            }}
+          />
+        </Field>
+
+        <div className="mb-6">
+          <Field label="Password" htmlFor="password">
+            <Input id="password" name="password" type="password" required autoComplete="current-password" />
+          </Field>
+        </div>
+
+        {state?.error ? <ErrorNote>{state.error}</ErrorNote> : null}
+
+        <Button type="submit" disabled={pending} full>
+          {pending ? 'Signing in…' : 'Sign in'}
+        </Button>
+      </form>
+    </Card>
   )
 }

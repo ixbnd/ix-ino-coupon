@@ -1,12 +1,13 @@
 import { Suspense } from 'react'
 import { LoginForm } from './login-form'
+import { CenteredPage } from '@/components/ui'
 
 export default function LoginPage() {
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 dark:bg-black">
+    <CenteredPage>
       <Suspense fallback={null}>
         <LoginForm />
       </Suspense>
-    </div>
+    </CenteredPage>
   )
 }

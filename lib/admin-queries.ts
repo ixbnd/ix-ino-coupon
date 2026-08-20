@@ -1,4 +1,4 @@
-import { and, eq, asc, gte, lte, sum, count, sql } from 'drizzle-orm'
+import { and, eq, asc, desc, gte, lte, sum, count, sql } from 'drizzle-orm'
 import { db } from '@/lib/db/client'
 import { employees, claims } from '@/lib/db/schema'
 
@@ -71,4 +71,26 @@ export async function claimCountsByDate(fromYmd: string, toYmd: string) {
     .from(claims)
     .where(and(eq(claims.voided, false), gte(claims.claimDate, fromYmd), lte(claims.claimDate, toYmd)))
     .groupBy(claims.claimDate)
+}
+
+/**
+ * An employee's own claim history, newest first.
+ *
+ * Scoped by employeePk, which callers must take from the session — never from a
+ * request parameter. There is no admin variant here on purpose: this query is
+ * the employee-facing one, and the only pk it should ever see is its caller's.
+ */
+export async function ownClaimHistory(employeePk: number, limit = 26) {
+  return db
+    .select({
+      id: claims.id,
+      claimDate: claims.claimDate,
+      claimedAt: claims.claimedAt,
+      billTotalCents: claims.billTotalCents,
+      capCents: claims.capCents,
+    })
+    .from(claims)
+    .where(and(eq(claims.employeePk, employeePk), eq(claims.voided, false)))
+    .orderBy(desc(claims.claimDate))
+    .limit(limit)
 }

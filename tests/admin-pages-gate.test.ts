@@ -87,7 +87,7 @@ describe('admin page segments gate on requireAdmin, independent of the (admin) l
   it('EmployeesPage (roster) 404s an employee-role session before reading the roster', async () => {
     await loginAsEmployee()
     const findManySpy = vi.spyOn(db.query.employees, 'findMany')
-    await expectNotFoundThrow(() => AdminEmployeesPage())
+    await expectNotFoundThrow(() => AdminEmployeesPage({ searchParams: Promise.resolve({}) }))
     expect(findManySpy).not.toHaveBeenCalled()
     findManySpy.mockRestore()
   })
@@ -106,7 +106,7 @@ describe('admin page segments gate on requireAdmin, independent of the (admin) l
 
   it('all four pages also 404 when there is no session at all', async () => {
     await expectNotFoundThrow(() => AdminClaimsPage({ searchParams: Promise.resolve({}) }))
-    await expectNotFoundThrow(() => AdminEmployeesPage())
+    await expectNotFoundThrow(() => AdminEmployeesPage({ searchParams: Promise.resolve({}) }))
     await expectNotFoundThrow(() => AdminMonthPage({ searchParams: Promise.resolve({}) }))
     await expectNotFoundThrow(() => AdminYearPage({ searchParams: Promise.resolve({}) }))
     expect(weekRows).not.toHaveBeenCalled()

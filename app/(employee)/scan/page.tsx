@@ -1,25 +1,33 @@
 import { redirect } from 'next/navigation'
 import { requireDbSession } from '@/lib/auth/session'
 import { Scanner } from './Scanner'
+import { Card, CenteredPage, TextLink } from '@/components/ui'
+import { Wordmark } from '@/components/wordmark'
 
 export default async function ScanPage() {
   const auth = await requireDbSession()
-  if (!auth) redirect('/login?next=/scan')
+  if (!auth) redirect('/login?next=%2Fscan')
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 dark:bg-black">
-      <div className="w-full max-w-sm rounded-lg border border-black/10 bg-white p-8 shadow-sm dark:border-white/10 dark:bg-zinc-900">
-        <h1 className="mb-6 text-xl font-semibold text-zinc-950 dark:text-zinc-50">Scan the coupon poster</h1>
-        <Scanner />
-        <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
-          You can also scan the poster with your phone&apos;s own camera app.
-        </p>
-        <p className="mt-2 text-sm">
-          <a href="/change-password" className="text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200">
-            Change password
-          </a>
-        </p>
+    <CenteredPage>
+      <div className="mb-6 flex justify-center">
+        <Wordmark size="sm" />
       </div>
-    </div>
+
+      <Card>
+        <h1 className="text-xl font-semibold tracking-tight text-fg">Scan the coupon poster</h1>
+        <p className="mt-1 mb-5 text-sm text-fg-muted">Point your camera at the code on the counter.</p>
+        <Scanner />
+        <p className="mt-4 text-sm text-fg-subtle">
+          Your phone&apos;s own camera app works too — it opens the same page.
+        </p>
+      </Card>
+
+      <p className="mt-6 flex items-center justify-center gap-4 text-sm">
+        <TextLink href="/history">My claim history</TextLink>
+        <span aria-hidden="true" className="text-fg-subtle">·</span>
+        <TextLink href="/change-password">Change password</TextLink>
+      </p>
+    </CenteredPage>
   )
 }

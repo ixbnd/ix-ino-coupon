@@ -25,7 +25,7 @@ export function EmployeeActions({
               setTemp(res.tempPassword)
             })
           }
-          className="rounded-md border border-zinc-300 px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="rounded-lg border border-border-strong bg-surface px-2.5 py-1.5 text-xs font-medium text-fg transition-colors hover:bg-surface-muted disabled:opacity-50"
         >
           Reset password
         </button>
@@ -37,7 +37,7 @@ export function EmployeeActions({
               await setEmployeeActive(employeePk, !active)
             })
           }
-          className="rounded-md border border-zinc-300 px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="rounded-lg border border-border-strong bg-surface px-2.5 py-1.5 text-xs font-medium text-fg transition-colors hover:bg-surface-muted disabled:opacity-50"
         >
           {active ? 'Deactivate' : 'Reactivate'}
         </button>

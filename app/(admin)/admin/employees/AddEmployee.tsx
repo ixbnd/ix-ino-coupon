@@ -14,7 +14,7 @@ export function AddEmployee() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200"
+        className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg transition-colors hover:bg-primary-hover"
       >
         Add employee
       </button>
@@ -29,17 +29,17 @@ function AddEmployeeModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-sm rounded-lg border border-black/10 bg-white p-6 shadow-lg dark:border-white/10 dark:bg-zinc-900">
+      <div className="w-full max-w-sm rounded-card border border-border bg-surface p-6 shadow-raised">
         {state?.tempPassword && state.employeeId ? (
           <>
-            <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Employee added</h2>
+            <h2 className="mb-4 text-lg font-semibold text-fg">Employee added</h2>
             <TempPasswordBox employeeId={state.employeeId} tempPassword={state.tempPassword} onDismiss={onClose} />
           </>
         ) : (
           <form action={formAction}>
-            <h2 className="mb-4 text-lg font-semibold text-zinc-950 dark:text-zinc-50">Add employee</h2>
+            <h2 className="mb-4 text-lg font-semibold text-fg">Add employee</h2>
             <div className="mb-4">
-              <label htmlFor="employeeId" className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label htmlFor="employeeId" className="mb-1 block text-sm font-medium text-fg">
                 Employee ID
               </label>
               <input
@@ -53,11 +53,11 @@ function AddEmployeeModal({ onClose }: { onClose: () => void }) {
                 onInput={(e) => {
                   e.currentTarget.value = formatEmployeeIdInput(e.currentTarget.value)
                 }}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
+                className="w-full rounded-md border border-border-strong bg-surface px-3 py-2.5 text-fg outline-none"
               />
             </div>
             <div className="mb-6">
-              <label htmlFor="name" className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label htmlFor="name" className="mb-1 block text-sm font-medium text-fg">
                 Name
               </label>
               <input
@@ -65,24 +65,24 @@ function AddEmployeeModal({ onClose }: { onClose: () => void }) {
                 name="name"
                 type="text"
                 required
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
+                className="w-full rounded-md border border-border-strong bg-surface px-3 py-2.5 text-fg outline-none"
               />
             </div>
             {state?.error ? (
-              <p className="mb-4 text-sm text-red-600 dark:text-red-400">{state.error}</p>
+              <p className="mb-4 text-sm text-danger">{state.error}</p>
             ) : null}
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="rounded-lg px-4 py-2.5 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-muted hover:text-fg"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={pending}
-                className="rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200"
+                className="rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg transition-colors hover:bg-primary-hover disabled:opacity-50"
               >
                 {pending ? 'Adding…' : 'Add'}
               </button>

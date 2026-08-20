@@ -19,9 +19,9 @@ export type DrawerClaim = {
 }
 
 const inputClass =
-  'w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-950 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50'
+  'w-full rounded-md border border-border-strong bg-surface px-3 py-2.5 text-fg outline-none'
 const primaryBtnClass =
-  'w-full rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200'
+  'w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg transition-colors hover:bg-primary-hover disabled:opacity-50'
 
 export function ClaimDrawer({
   employee, claim, onClose,
@@ -54,45 +54,45 @@ export function ClaimDrawer({
         onClick={onClose}
         className="absolute inset-0 bg-black/30"
       />
-      <div className="relative flex h-full w-full max-w-sm flex-col overflow-y-auto border-l border-black/10 bg-white p-6 shadow-xl dark:border-white/10 dark:bg-zinc-900">
+      <div className="relative flex h-full w-full max-w-sm flex-col overflow-y-auto border-l border-border bg-surface p-6 shadow-raised">
         <div className="mb-6 flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">{employee.name}</h2>
-            <p className="font-mono text-sm text-zinc-500 dark:text-zinc-400">{employee.employeeId}</p>
+            <h2 className="text-lg font-semibold text-fg">{employee.name}</h2>
+            <p className="font-mono text-sm text-fg-muted">{employee.employeeId}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded-md px-2 py-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+            className="rounded-lg px-2 py-1 text-fg-muted transition-colors hover:bg-surface-muted hover:text-fg"
           >
             ✕
           </button>
         </div>
 
         <dl className="mb-6 grid grid-cols-2 gap-y-2 text-sm">
-          <dt className="text-zinc-500 dark:text-zinc-400">Thursday</dt>
-          <dd className="text-right text-zinc-950 dark:text-zinc-50">{claim.thursdayLabel}</dd>
-          <dt className="text-zinc-500 dark:text-zinc-400">Claimed at</dt>
-          <dd className="text-right text-zinc-950 dark:text-zinc-50">{claim.timeHm}</dd>
-          <dt className="text-zinc-500 dark:text-zinc-400">Covered</dt>
-          <dd className="text-right text-zinc-950 dark:text-zinc-50">
+          <dt className="text-fg-muted">Thursday</dt>
+          <dd className="text-right text-fg">{claim.thursdayLabel}</dd>
+          <dt className="text-fg-muted">Claimed at</dt>
+          <dd className="text-right text-fg">{claim.timeHm}</dd>
+          <dt className="text-fg-muted">Covered</dt>
+          <dd className="text-right text-fg">
             {formatCents(coveredCents(claim.billTotalCents, claim.capCents))}
           </dd>
-          <dt className="text-zinc-500 dark:text-zinc-400">Excess</dt>
-          <dd className="text-right text-zinc-950 dark:text-zinc-50">
+          <dt className="text-fg-muted">Excess</dt>
+          <dd className="text-right text-fg">
             {formatCents(excessCents(claim.billTotalCents, claim.capCents))}
           </dd>
           {claim.amendedLabel ? (
             <>
-              <dt className="text-zinc-500 dark:text-zinc-400">Amended</dt>
-              <dd className="text-right text-amber-700 dark:text-amber-400">{claim.amendedLabel}</dd>
+              <dt className="text-fg-muted">Amended</dt>
+              <dd className="text-right text-fg-muted">{claim.amendedLabel}</dd>
             </>
           ) : null}
         </dl>
 
         <form action={formAction} className="mb-6">
-          <label htmlFor="drawer-bill" className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <label htmlFor="drawer-bill" className="mb-1 block text-sm font-medium text-fg">
             Bill total
           </label>
           <input
@@ -107,22 +107,22 @@ export function ClaimDrawer({
             className={`${inputClass} mb-2`}
           />
           {cents !== null ? (
-            <p className="mb-3 text-sm text-zinc-700 dark:text-zinc-300">
+            <p className="mb-3 text-sm text-fg">
               Covered {formatCents(coveredCents(cents, claim.capCents))} / Excess{' '}
               {formatCents(excessCents(cents, claim.capCents))}
             </p>
           ) : null}
-          {state?.error ? <p className="mb-3 text-sm text-red-600 dark:text-red-400">{state.error}</p> : null}
+          {state?.error ? <p className="mb-3 text-sm text-danger">{state.error}</p> : null}
           <button type="submit" disabled={amendPending} className={primaryBtnClass}>
             {amendPending ? 'Saving…' : 'Save changes'}
           </button>
         </form>
 
-        <div className="mt-auto border-t border-black/10 pt-4 dark:border-white/10">
-          {voidError ? <p className="mb-3 text-sm text-red-600 dark:text-red-400">{voidError}</p> : null}
+        <div className="mt-auto border-t border-border pt-4">
+          {voidError ? <p className="mb-3 text-sm text-danger">{voidError}</p> : null}
           {confirmingVoid ? (
             <div className="flex flex-col gap-2">
-              <p className="text-sm text-zinc-700 dark:text-zinc-300">Void this claim? This can&apos;t be undone from here.</p>
+              <p className="text-sm text-fg">Void this claim? This can&apos;t be undone from here.</p>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -138,7 +138,7 @@ export function ClaimDrawer({
                       }
                     })
                   }
-                  className="flex-1 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  className="flex-1 rounded-lg border border-danger/50 bg-danger-subtle px-4 py-2.5 text-sm font-medium text-danger transition-colors hover:border-danger disabled:opacity-50"
                 >
                   {voidPending ? 'Voiding…' : 'Confirm void'}
                 </button>
@@ -146,7 +146,7 @@ export function ClaimDrawer({
                   type="button"
                   onClick={() => setConfirmingVoid(false)}
                   disabled={voidPending}
-                  className="flex-1 rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="flex-1 rounded-lg border border-border-strong bg-surface px-4 py-2.5 text-sm font-medium text-fg transition-colors hover:bg-surface-muted disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -159,7 +159,7 @@ export function ClaimDrawer({
                 setVoidError(null)
                 setConfirmingVoid(true)
               }}
-              className="w-full rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
+              className="w-full rounded-lg border border-danger/40 bg-danger-subtle px-4 py-2.5 text-sm font-medium text-danger transition-colors hover:border-danger"
             >
               Void claim
             </button>
