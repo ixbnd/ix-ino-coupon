@@ -1,0 +1,1 @@
+ALTER TABLE "claims" ADD COLUMN "car_wash_cents" integer DEFAULT 0 NOT NULL;

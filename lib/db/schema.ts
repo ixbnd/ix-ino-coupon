@@ -20,7 +20,12 @@ export const claims = pgTable('claims', {
   employeePk: integer('employee_pk').notNull().references(() => employees.id),
   claimDate: date('claim_date').notNull(),
   claimedAt: timestamp('claimed_at', { withTimezone: true }).notNull().defaultNow(),
+  // The grand total charged, car wash included. Every money query and export sums this one
+  // column, so coverage and excess keep working untouched as more line items appear.
   billTotalCents: integer('bill_total_cents').notNull(),
+  // How much of that total was a car wash — a breakdown of billTotalCents, never an addition
+  // to it. 0 means no car wash on this visit.
+  carWashCents: integer('car_wash_cents').notNull().default(0),
   capCents: integer('cap_cents').notNull(),
   voided: boolean('voided').notNull().default(false),
   amendedBy: integer('amended_by').references(() => employees.id),

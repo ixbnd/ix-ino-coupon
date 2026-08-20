@@ -60,7 +60,7 @@ describe('buildWorkbook', () => {
       {
         employee: { id: 1, employeeId: 'XLS-0001', name: 'Ada' },
         claim: {
-          id: 1, employeePk: 1, claimDate: YMD, claimedAt: new Date('2026-08-20T04:00:00Z'), billTotalCents: 1850, capCents: 1500,
+          id: 1, employeePk: 1, claimDate: YMD, claimedAt: new Date('2026-08-20T04:00:00Z'), billTotalCents: 1850, carWashCents: 0, capCents: 1500,
           voided: false, amendedBy: null, amendedAt: null, voidedBy: null, voidedAt: null,
         },
       },
@@ -77,6 +77,7 @@ describe('buildWorkbook', () => {
     expect(headerRow.getCell(1).text).toBe('Employee ID')
     expect(headerRow.getCell(1).font?.bold).toBe(true)
     expect(headerRow.getCell(5).text).toBe('Bill')
+    expect(headerRow.getCell(6).text).toBe('Car Wash')
 
     const claimedDataRow = sheet.getRow(3)
     const billCell = claimedDataRow.getCell(5)
@@ -90,8 +91,8 @@ describe('buildWorkbook', () => {
     const totalsRow = sheet.getRow(5)
     expect(totalsRow.font?.bold).toBe(true)
     expect(totalsRow.getCell(5).value).toBe(18.5) // bill total
-    expect(totalsRow.getCell(6).value).toBe(15) // covered total: min(18.50, 15.00)
-    expect(totalsRow.getCell(7).value).toBe(3.5) // excess total: 18.50 - 15.00
+    expect(totalsRow.getCell(7).value).toBe(15) // covered total: min(18.50, 15.00)
+    expect(totalsRow.getCell(8).value).toBe(3.5) // excess total: 18.50 - 15.00
   })
 
   it('sums month/year aggregate rows into a totals row', async () => {
@@ -192,5 +193,38 @@ describe('GET /api/export', () => {
 
     const yearRes = await GET(new Request('http://localhost/api/export?scope=year&year=2026'))
     expect(yearRes.headers.get('Content-Disposition')).toBe('attachment; filename="claims-2026.xlsx"')
+  })
+})
+
+describe('buildWorkbook car wash column', () => {
+  it('writes the car wash portion and its total, leaving it blank when there was none', async () => {
+    const rows = mapWeekRows([
+      {
+        employee: { id: 1, employeeId: 'XLS-0020', name: 'Ada' },
+        claim: {
+          id: 1, employeePk: 1, claimDate: YMD, claimedAt: new Date('2026-08-20T04:00:00Z'),
+          billTotalCents: 2350, carWashCents: 500, capCents: 1500,
+          voided: false, amendedBy: null, amendedAt: null, voidedBy: null, voidedAt: null,
+        },
+      },
+      {
+        employee: { id: 2, employeeId: 'XLS-0021', name: 'Bo' },
+        claim: {
+          id: 2, employeePk: 2, claimDate: YMD, claimedAt: new Date('2026-08-20T04:00:00Z'),
+          billTotalCents: 1000, carWashCents: 0, capCents: 1500,
+          voided: false, amendedBy: null, amendedAt: null, voidedBy: null, voidedAt: null,
+        },
+      },
+    ])
+
+    const sheet = await reopen(await buildWorkbook('week', YMD, rows))
+
+    expect(sheet.getRow(2).getCell(6).text).toBe('Car Wash')
+    expect(sheet.getRow(3).getCell(6).value).toBe(5) // $5.00 car wash
+    expect(sheet.getRow(3).getCell(6).numFmt).toBe('$#,##0.00')
+    expect(sheet.getRow(4).getCell(6).value).toBeFalsy() // no car wash -> blank, not $0.00
+    // Bill column still carries the combined total, so covered/excess are unaffected.
+    expect(sheet.getRow(3).getCell(5).value).toBe(23.5)
+    expect(sheet.lastRow!.getCell(6).value).toBe(5) // car wash total
   })
 })

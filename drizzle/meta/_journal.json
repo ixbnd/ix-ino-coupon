@@ -15,6 +15,13 @@
       "when": 1787194642538,
       "tag": "0001_mute_living_mummy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787218182561,
+      "tag": "0002_low_pete_wisdom",
+      "breakpoints": true
     }
   ]
 }

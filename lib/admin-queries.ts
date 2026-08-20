@@ -96,6 +96,7 @@ export async function ownClaimHistory(employeePk: number, limit = 26) {
       claimDate: claims.claimDate,
       claimedAt: claims.claimedAt,
       billTotalCents: claims.billTotalCents,
+      carWashCents: claims.carWashCents,
       capCents: claims.capCents,
     })
     .from(claims)

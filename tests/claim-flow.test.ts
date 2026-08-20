@@ -4,6 +4,7 @@ import { db } from '@/lib/db/client'
 import { employees, claims } from '@/lib/db/schema'
 import { hashPassword } from '@/lib/auth/password'
 import { signSessionToken, SESSION_COOKIE } from '@/lib/auth/token'
+import { coveredCents, excessCents } from '@/lib/money'
 
 const { cookieStore } = vi.hoisted(() => ({ cookieStore: new Map<string, { value: string }>() }))
 
@@ -140,5 +141,57 @@ describe('submitClaim', () => {
     } finally {
       vi.setSystemTime(THU_NOON)
     }
+  })
+})
+
+describe('submitClaim with a car wash', () => {
+  it('adds the car wash to the stored total and records the breakdown', async () => {
+    const emp = await loginAs('CLW-0001')
+
+    await submitAndFollowRedirect({ t: TOKEN, bill: '18.50', carWash: 'on', carWashAmount: '5.00' })
+
+    const [row] = await db.select().from(claims).where(eq(claims.employeePk, emp.id))
+    expect(row.billTotalCents).toBe(2350)
+    expect(row.carWashCents).toBe(500)
+    // The cap applies to the combined total, so a $23.50 visit still covers $15.
+    expect(coveredCents(row.billTotalCents, row.capCents)).toBe(1500)
+    expect(excessCents(row.billTotalCents, row.capCents)).toBe(850)
+  })
+
+  it('ignores a car wash amount when the box is not ticked', async () => {
+    const emp = await loginAs('CLW-0002')
+
+    await submitAndFollowRedirect({ t: TOKEN, bill: '12.00', carWashAmount: '5.00' })
+
+    const [row] = await db.select().from(claims).where(eq(claims.employeePk, emp.id))
+    expect(row.billTotalCents).toBe(1200)
+    expect(row.carWashCents).toBe(0)
+  })
+
+  it('rejects a ticked box with no amount', async () => {
+    await loginAs('CLW-0003')
+
+    const result = await submitClaim(null, formData({ t: TOKEN, bill: '12.00', carWash: 'on', carWashAmount: '' }))
+
+    expect(result?.error).toMatch(/car wash amount/i)
+    expect(await db.select().from(claims)).toHaveLength(0)
+  })
+
+  it('rejects a combined total over the maximum', async () => {
+    await loginAs('CLW-0004')
+
+    const result = await submitClaim(null, formData({ t: TOKEN, bill: '400.00', carWash: 'on', carWashAmount: '150.00' }))
+
+    expect(result?.error).toMatch(/together cannot exceed/i)
+    expect(await db.select().from(claims)).toHaveLength(0)
+  })
+
+  it('stores zero car wash for a plain claim', async () => {
+    const emp = await loginAs('CLW-0005')
+
+    await submitAndFollowRedirect({ t: TOKEN, bill: '9.90' })
+
+    const [row] = await db.select().from(claims).where(eq(claims.employeePk, emp.id))
+    expect(row.carWashCents).toBe(0)
   })
 })

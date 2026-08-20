@@ -12,6 +12,7 @@ export type WeekExportRow = {
   claimed: boolean
   time: string | null
   billCents: number | null
+  carWashCents: number | null
   coveredCents: number | null
   excessCents: number | null
 }
@@ -44,6 +45,7 @@ export function mapWeekRows(rows: Awaited<ReturnType<typeof weekRows>>): WeekExp
     claimed: claim !== null,
     time: claim ? localHm(claim.claimedAt) : null,
     billCents: claim ? claim.billTotalCents : null,
+    carWashCents: claim ? claim.carWashCents : null,
     coveredCents: claim ? coveredCents(claim.billTotalCents, claim.capCents) : null,
     excessCents: claim ? excessCents(claim.billTotalCents, claim.capCents) : null,
   }))
@@ -62,7 +64,7 @@ export function mapSummaryRows(rows: Awaited<ReturnType<typeof rangeSummary>>): 
   }))
 }
 
-const WEEK_COLUMNS = ['Employee ID', 'Name', 'Claimed', 'Time', 'Bill', 'Covered', 'Excess']
+const WEEK_COLUMNS = ['Employee ID', 'Name', 'Claimed', 'Time', 'Bill', 'Car Wash', 'Covered', 'Excess']
 const SUMMARY_COLUMNS = ['Employee ID', 'Name', 'Coupons Claimed', 'Total Bill', 'Total Covered', 'Total Excess']
 
 export async function buildWorkbook(scope: ExportScope, label: string, rows: ExportRow[]): Promise<Buffer> {
@@ -70,7 +72,8 @@ export async function buildWorkbook(scope: ExportScope, label: string, rows: Exp
   const sheet = wb.addWorksheet('Claims')
 
   const columns = scope === 'week' ? WEEK_COLUMNS : SUMMARY_COLUMNS
-  const [billCol, coveredCol, excessCol] = scope === 'week' ? [5, 6, 7] : [4, 5, 6]
+  const [billCol, coveredCol, excessCol] = scope === 'week' ? [5, 7, 8] : [4, 5, 6]
+  const carWashCol = 6 // week sheet only
 
   const titleRow = sheet.addRow([`Claims — ${label}`])
   titleRow.font = { bold: true, size: 14 }
@@ -80,6 +83,7 @@ export async function buildWorkbook(scope: ExportScope, label: string, rows: Exp
   headerRow.font = { bold: true }
 
   let totalBill = 0
+  let totalCarWash = 0
   let totalCovered = 0
   let totalExcess = 0
   let totalCount = 0
@@ -93,11 +97,16 @@ export async function buildWorkbook(scope: ExportScope, label: string, rows: Exp
         r.claimed ? 'Yes' : 'No',
         r.time ?? '',
         r.claimed ? toDollars(r.billCents!) : '',
+        r.claimed && r.carWashCents ? toDollars(r.carWashCents) : '',
         r.claimed ? toDollars(r.coveredCents!) : '',
         r.claimed ? toDollars(r.excessCents!) : '',
       ])
       if (r.claimed) {
         excelRow.getCell(billCol).numFmt = MONEY_FORMAT
+        if (r.carWashCents) {
+          excelRow.getCell(carWashCol).numFmt = MONEY_FORMAT
+          totalCarWash += r.carWashCents
+        }
         excelRow.getCell(coveredCol).numFmt = MONEY_FORMAT
         excelRow.getCell(excessCol).numFmt = MONEY_FORMAT
         totalBill += r.billCents!
@@ -120,11 +129,21 @@ export async function buildWorkbook(scope: ExportScope, label: string, rows: Exp
 
   const totalsValues =
     scope === 'week'
-      ? [`Total (${totalCount} claimed)`, '', '', '', toDollars(totalBill), toDollars(totalCovered), toDollars(totalExcess)]
+      ? [
+          `Total (${totalCount} claimed)`,
+          '',
+          '',
+          '',
+          toDollars(totalBill),
+          totalCarWash ? toDollars(totalCarWash) : '',
+          toDollars(totalCovered),
+          toDollars(totalExcess),
+        ]
       : [`Total (${totalCount} claims)`, '', '', toDollars(totalBill), toDollars(totalCovered), toDollars(totalExcess)]
   const totalsRow = sheet.addRow(totalsValues)
   totalsRow.font = { bold: true }
   totalsRow.getCell(billCol).numFmt = MONEY_FORMAT
+  if (scope === 'week' && totalCarWash) totalsRow.getCell(carWashCol).numFmt = MONEY_FORMAT
   totalsRow.getCell(coveredCol).numFmt = MONEY_FORMAT
   totalsRow.getCell(excessCol).numFmt = MONEY_FORMAT
 

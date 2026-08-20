@@ -11,6 +11,7 @@ export type DrawerEmployee = { id: number; employeeId: string; name: string }
 export type DrawerClaim = {
   id: number
   billTotalCents: number
+  carWashCents: number
   capCents: number
   timeHm: string
   thursdayLabel: string
@@ -78,6 +79,12 @@ export function ClaimDrawer({
           <dd className="text-right text-fg">{claim.thursdayLabel}</dd>
           <dt className="text-fg-muted">Claimed at</dt>
           <dd className="text-right text-fg">{claim.timeHm}</dd>
+          {claim.carWashCents > 0 ? (
+            <>
+              <dt className="text-fg-muted">Car wash</dt>
+              <dd className="tnum text-right text-fg">{formatCents(claim.carWashCents)}</dd>
+            </>
+          ) : null}
           <dt className="text-fg-muted">Covered</dt>
           <dd className="text-right text-fg">
             {formatCents(coveredCents(claim.billTotalCents, claim.capCents))}

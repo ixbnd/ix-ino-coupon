@@ -33,6 +33,7 @@ export default async function AdminClaimsPage({ searchParams }: { searchParams: 
       ? {
           id: claim.id,
           billTotalCents: claim.billTotalCents,
+          carWashCents: claim.carWashCents,
           capCents: claim.capCents,
           timeHm: localHm(claim.claimedAt),
           thursdayLabel: formatYmdLong(claim.claimDate),
