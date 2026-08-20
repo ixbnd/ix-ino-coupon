@@ -37,8 +37,8 @@ export default async function EmployeesPage({
             {query ? ` matching “${query}”` : ''}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <form method="get" className="flex items-center gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          <form method="get" className="flex flex-1 items-center gap-2">
             <label htmlFor="q" className="sr-only">
               Search employees
             </label>
@@ -48,11 +48,11 @@ export default async function EmployeesPage({
               type="search"
               defaultValue={query}
               placeholder="Search ID or name"
-              className="h-9 w-44 rounded-lg border border-border-strong bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle focus:outline-none"
+              className="h-11 w-full rounded-lg border border-border-strong bg-surface px-3 text-base text-fg placeholder:text-fg-subtle focus:outline-none sm:h-9 sm:w-44 sm:text-sm"
             />
             <button
               type="submit"
-              className="h-9 rounded-lg border border-border-strong bg-surface px-3 text-sm font-medium text-fg transition-colors hover:bg-surface-muted"
+              className="h-11 shrink-0 rounded-lg border border-border-strong bg-surface px-4 text-sm font-medium text-fg transition-colors hover:bg-surface-muted sm:h-9 sm:px-3"
             >
               Search
             </button>
@@ -60,7 +60,57 @@ export default async function EmployeesPage({
           <AddEmployee />
         </div>
       </div>
-      <div className="overflow-x-auto rounded-card border border-border bg-surface shadow-card">
+      <div className="rounded-card border border-border bg-surface shadow-card">
+        {/* Phones: a card per person. Six columns do not fit, and the actions
+            need a thumb-sized target rather than a table cell. */}
+        <ul className="divide-y divide-border sm:hidden">
+          {roster.map((emp) => (
+            <li key={emp.id} className="px-4 py-3.5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-fg">{emp.name}</p>
+                  <p className="mt-0.5 font-mono text-xs text-fg-muted">{emp.employeeId}</p>
+                  <p className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+                    {emp.role === 'admin' ? (
+                      <span className="rounded-full bg-brand-subtle px-2 py-0.5 font-medium text-fg">Admin</span>
+                    ) : null}
+                    {emp.active ? null : (
+                      <span className="rounded-full bg-surface-muted px-2 py-0.5 font-medium text-fg-subtle">
+                        Inactive
+                      </span>
+                    )}
+                    <span className="text-fg-subtle">
+                      Added{' '}
+                      {new Intl.DateTimeFormat('en-GB', {
+                        dateStyle: 'medium',
+                        timeZone: process.env.APP_TIMEZONE ?? 'Asia/Brunei',
+                      }).format(emp.createdAt)}
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3">
+                <EmployeeActions employeePk={emp.id} employeeId={emp.employeeId} active={emp.active} />
+              </div>
+            </li>
+          ))}
+          {roster.length === 0 ? (
+            <li className="px-4 py-10 text-center text-sm text-fg-muted">
+              {query ? (
+                <>
+                  Nobody matches “{query}”.{' '}
+                  <a href="/admin/employees" className="font-medium text-primary underline underline-offset-4">
+                    Clear search
+                  </a>
+                </>
+              ) : (
+                'No employees yet — add the first one with the button above.'
+              )}
+            </li>
+          ) : null}
+        </ul>
+
+        <div className="hidden overflow-x-auto sm:block">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-border text-xs font-semibold uppercase tracking-wide text-fg-muted">
@@ -108,6 +158,7 @@ export default async function EmployeesPage({
             ) : null}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

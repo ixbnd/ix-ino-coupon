@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import { rangeSummary, claimCountsByDate } from '@/lib/admin-queries'
 import { thursdaysInMonth, localYmd, lastDayOfMonthYmd } from '@/lib/thursday'
-import { formatCents } from '@/lib/money'
 import { isValidMonth } from '@/lib/admin-validation'
 import { requireAdmin } from '@/lib/auth/session'
-import { ScopeNav } from '../ScopeNav'
-import { stepLinkClass, thClass, tdClass, chipClass } from '../adminStyles'
+import { ViewHeader, PeriodBar } from '../ViewChrome'
+import { SummaryList } from '../SummaryList'
+import { chipClass } from '../adminStyles'
 
 function shiftMonth(ym: string, delta: number): string {
   const [y, m] = ym.split('-').map(Number)
@@ -56,27 +56,16 @@ export default async function AdminMonthPage({ searchParams }: { searchParams: P
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-fg">Claims</h1>
-        <ScopeNav active="month" />
-      </div>
+      <ViewHeader active="month" />
 
-      <div className="mb-4 flex items-center justify-between gap-4 text-sm">
-        <div className="flex items-center gap-4">
-          <Link href={`/admin/month?month=${prev}`} className={stepLinkClass}>
-            ◀
-          </Link>
-          <span className="font-medium text-fg">{formatMonthLong(current)}</span>
-          {canGoNext ? (
-            <Link href={`/admin/month?month=${next}`} className={stepLinkClass}>
-              ▶
-            </Link>
-          ) : null}
-        </div>
-        <a href={`/api/export?scope=month&month=${current}`} className={stepLinkClass}>
-          Export .xlsx
-        </a>
-      </div>
+      <PeriodBar
+        label={formatMonthLong(current)}
+        prevHref={`/admin/month?month=${prev}`}
+        nextHref={canGoNext ? `/admin/month?month=${next}` : null}
+        exportHref={`/api/export?scope=month&month=${current}`}
+        prevLabel="Previous month"
+        nextLabel="Next month"
+      />
 
       {thursdays.length > 0 ? (
         <div className="mb-6 flex flex-wrap gap-2">
@@ -90,49 +79,12 @@ export default async function AdminMonthPage({ searchParams }: { searchParams: P
       ) : null}
 
       <div className="overflow-x-auto rounded-card border border-border bg-surface shadow-card">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-border text-xs font-semibold uppercase tracking-wide text-fg-muted">
-              <th className={thClass}>Employee ID</th>
-              <th className={thClass}>Name</th>
-              <th className={thClass}>Coupons claimed</th>
-              <th className={thClass}>Total Bill</th>
-              <th className={thClass}>Total Covered</th>
-              <th className={thClass}>Total Excess</th>
-            </tr>
-          </thead>
-          <tbody>
-            {summary.map((r) => (
-              <tr key={r.employee.id} className="border-b border-border/70 last:border-0">
-                <td className={`${tdClass} font-mono text-fg`}>{r.employee.employeeId}</td>
-                <td className={`${tdClass} text-fg`}>{r.employee.name}</td>
-                <td className={`${tdClass} text-fg`}>
-                  {r.claimCount} / {elapsed}
-                </td>
-                <td className={`${tdClass} text-fg`}>{formatCents(r.billCents)}</td>
-                <td className={`${tdClass} text-fg`}>{formatCents(r.coveredCents)}</td>
-                <td className={`${tdClass} text-fg`}>{formatCents(r.excessCents)}</td>
-              </tr>
-            ))}
-            {summary.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-fg-muted">
-                  No active employees.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-          <tfoot>
-            <tr className="border-t-2 border-border-strong bg-surface-muted text-sm font-semibold text-fg">
-              <td className={tdClass} colSpan={3}>
-                Total {totals.claims} claims
-              </td>
-              <td className={tdClass}>{formatCents(totals.bill)}</td>
-              <td className={tdClass}>{formatCents(totals.covered)}</td>
-              <td className={tdClass}>{formatCents(totals.excess)}</td>
-            </tr>
-          </tfoot>
-        </table>
+        <SummaryList
+          rows={summary}
+          denominator={elapsed}
+          totals={totals}
+          countLabel={`Total ${totals.claims} claims`}
+        />
       </div>
     </div>
   )

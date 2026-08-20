@@ -47,14 +47,17 @@ export function ClaimDrawer({
   const cents = parseBillToCents(bill)
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+    // Bottom sheet on phones (thumb reach, natural dismissal), side panel from sm up.
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-stretch sm:justify-end">
       <button
         type="button"
         aria-label="Close claim details"
         onClick={onClose}
         className="absolute inset-0 bg-black/30"
       />
-      <div className="relative flex h-full w-full max-w-sm flex-col overflow-y-auto border-l border-border bg-surface p-6 shadow-raised">
+      <div className="relative flex max-h-[88vh] w-full flex-col overflow-y-auto rounded-t-card border border-border bg-surface p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-raised sm:h-full sm:max-h-none sm:max-w-sm sm:rounded-none sm:border-0 sm:border-l">
+        {/* Grab handle: the affordance people expect on a sheet. */}
+        <div aria-hidden="true" className="mx-auto mb-4 h-1 w-10 shrink-0 rounded-full bg-border-strong sm:hidden" />
         <div className="mb-6 flex items-start justify-between">
           <div>
             <h2 className="text-lg font-semibold text-fg">{employee.name}</h2>
@@ -64,7 +67,7 @@ export function ClaimDrawer({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded-lg px-2 py-1 text-fg-muted transition-colors hover:bg-surface-muted hover:text-fg"
+            className="-mt-1 -mr-1 flex h-10 w-10 items-center justify-center rounded-lg text-fg-muted transition-colors hover:bg-surface-muted hover:text-fg"
           >
             ✕
           </button>

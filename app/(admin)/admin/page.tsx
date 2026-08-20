@@ -1,13 +1,12 @@
-import Link from 'next/link'
 import { weekRows, voidedRows } from '@/lib/admin-queries'
 import { currentWeekThursday, addDaysYmd, formatYmdLong, localHm } from '@/lib/thursday'
 import { coveredCents, excessCents, formatCents } from '@/lib/money'
 import { isValidThursdayYmd } from '@/lib/admin-validation'
 import { requireAdmin } from '@/lib/auth/session'
-import { ScopeNav } from './ScopeNav'
+import { ViewHeader, PeriodBar } from './ViewChrome'
 import { AmendedTag } from './AmendedTag'
 import { ClaimsTable } from './ClaimsTable'
-import { stepLinkClass, thClass, tdClass } from './adminStyles'
+import { thClass, tdClass } from './adminStyles'
 
 export default async function AdminClaimsPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
   // Next renders page segments independently of layouts, so the layout's requireAdmin() alone
@@ -44,27 +43,16 @@ export default async function AdminClaimsPage({ searchParams }: { searchParams: 
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-fg">Claims</h1>
-        <ScopeNav active="week" />
-      </div>
+      <ViewHeader active="week" />
 
-      <div className="mb-4 flex items-center justify-between gap-4 text-sm">
-        <div className="flex items-center gap-4">
-          <Link href={`/admin?date=${prev}`} className={stepLinkClass}>
-            ◀
-          </Link>
-          <span className="font-medium text-fg">{formatYmdLong(current)}</span>
-          {canGoNext ? (
-            <Link href={`/admin?date=${next}`} className={stepLinkClass}>
-              ▶
-            </Link>
-          ) : null}
-        </div>
-        <a href={`/api/export?scope=week&date=${current}`} className={stepLinkClass}>
-          Export .xlsx
-        </a>
-      </div>
+      <PeriodBar
+        label={formatYmdLong(current)}
+        prevHref={`/admin?date=${prev}`}
+        nextHref={canGoNext ? `/admin?date=${next}` : null}
+        exportHref={`/api/export?scope=week&date=${current}`}
+        prevLabel="Previous Thursday"
+        nextLabel="Next Thursday"
+      />
 
       <div className="overflow-x-auto rounded-card border border-border bg-surface shadow-card">
         <ClaimsTable rows={rows} />

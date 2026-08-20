@@ -20,9 +20,81 @@ export function ClaimsTable({ rows }: { rows: Row[] }) {
   const totalCovered = claimedRows.reduce((sum, r) => sum + coveredCents(r.claim!.billTotalCents, r.claim!.capCents), 0)
   const totalExcess = claimedRows.reduce((sum, r) => sum + excessCents(r.claim!.billTotalCents, r.claim!.capCents), 0)
 
+  const open = (employee: DrawerEmployee, claim: DrawerClaim) => setSelected({ employee, claim })
+
   return (
     <>
-      <table className="w-full text-left text-sm">
+      {/* ---- phones: one card per person -------------------------------------
+          A seven-column table on a 390px screen pushes Bill/Covered/Excess off
+          the edge — the three numbers the page exists to show. Cards keep them
+          on screen and give the whole row a thumb-sized tap target. */}
+      <ul className="divide-y divide-border sm:hidden">
+        {rows.map(({ employee, claim }) => {
+          const covered = claim ? coveredCents(claim.billTotalCents, claim.capCents) : null
+          const excess = claim ? excessCents(claim.billTotalCents, claim.capCents) : null
+          return (
+            <li key={employee.id}>
+              <button
+                type="button"
+                disabled={!claim}
+                onClick={claim ? () => open(employee, claim) : undefined}
+                aria-label={claim ? `View claim details for ${employee.name}` : undefined}
+                className="flex w-full items-start justify-between gap-3 px-4 py-3.5 text-left transition-colors enabled:hover:bg-surface-muted disabled:cursor-default"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-fg">{employee.name}</p>
+                  <p className="mt-0.5 font-mono text-xs text-fg-muted">{employee.employeeId}</p>
+
+                  {claim ? (
+                    <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                      <span className="font-medium text-success">Claimed</span>
+                      <span className="tnum text-fg-muted">{claim.timeHm}</span>
+                      <span className="tnum text-fg-muted">bill {formatCents(claim.billTotalCents)}</span>
+                      {claim.amended ? <AmendedTag /> : null}
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-sm text-fg-subtle">Not claimed</p>
+                  )}
+                </div>
+
+                {claim ? (
+                  <div className="shrink-0 text-right">
+                    <p className="tnum font-semibold text-fg">{formatCents(covered!)}</p>
+                    {excess! > 0 ? (
+                      <p className="tnum mt-0.5 text-xs text-fg-muted">+{formatCents(excess!)} excess</p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </button>
+            </li>
+          )
+        })}
+        {rows.length === 0 ? (
+          <li className="px-4 py-10 text-center text-sm text-fg-muted">No active employees.</li>
+        ) : null}
+      </ul>
+
+      {rows.length > 0 ? (
+        <dl className="flex flex-wrap justify-between gap-4 border-t-2 border-border-strong bg-surface-muted px-4 py-3 text-sm sm:hidden">
+          <div>
+            <dt className="text-fg-muted">Claimed</dt>
+            <dd className="tnum mt-0.5 font-semibold text-fg">
+              {claimedRows.length} / {rows.length}
+            </dd>
+          </div>
+          <div className="text-right">
+            <dt className="text-fg-muted">Covered</dt>
+            <dd className="tnum mt-0.5 font-semibold text-fg">{formatCents(totalCovered)}</dd>
+          </div>
+          <div className="text-right">
+            <dt className="text-fg-muted">Excess</dt>
+            <dd className="tnum mt-0.5 font-semibold text-fg">{formatCents(totalExcess)}</dd>
+          </div>
+        </dl>
+      ) : null}
+
+      {/* ---- sm and up: the full table --------------------------------------- */}
+      <table className="hidden w-full text-left text-sm sm:table">
         <thead>
           <tr className="border-b border-border text-xs font-semibold uppercase tracking-wide text-fg-muted">
             <th className={thClass}>Employee ID</th>
@@ -38,13 +110,13 @@ export function ClaimsTable({ rows }: { rows: Row[] }) {
           {rows.map(({ employee, claim }) => (
             <tr
               key={employee.id}
-              onClick={claim ? () => setSelected({ employee, claim }) : undefined}
+              onClick={claim ? () => open(employee, claim) : undefined}
               onKeyDown={
                 claim
                   ? (e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault()
-                        setSelected({ employee, claim })
+                        open(employee, claim)
                       }
                     }
                   : undefined
@@ -106,8 +178,8 @@ export function ClaimsTable({ rows }: { rows: Row[] }) {
             </td>
             <td className={tdClass} />
             <td className={tdClass} />
-            <td className={tdClass}>{formatCents(totalCovered)}</td>
-            <td className={tdClass}>{formatCents(totalExcess)}</td>
+            <td className={`${tdClass} tnum`}>{formatCents(totalCovered)}</td>
+            <td className={`${tdClass} tnum`}>{formatCents(totalExcess)}</td>
           </tr>
         </tfoot>
       </table>
