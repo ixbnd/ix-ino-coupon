@@ -52,3 +52,17 @@ export function localHm(d: Date, tz = DEFAULT_TZ()): string {
 export function lastDayOfMonthYmd(year: number, month: number): string {
   return new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10) // day 0 of next month = last day of this one
 }
+
+/** Whole days from today (in `tz`) until `ymd`. 1 = tomorrow. */
+export function daysUntil(ymd: string, now: Date, tz = DEFAULT_TZ()): number {
+  const from = new Date(`${localYmd(now, tz)}T00:00:00Z`).getTime()
+  const to = new Date(`${ymd}T00:00:00Z`).getTime()
+  return Math.round((to - from) / 86_400_000)
+}
+
+/** "tomorrow" / "in 3 days" — a human sense of the wait, not just a date. */
+export function waitLabel(days: number): string {
+  if (days <= 0) return 'today'
+  if (days === 1) return 'tomorrow'
+  return `in ${days} days`
+}

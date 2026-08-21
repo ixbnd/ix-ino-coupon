@@ -134,9 +134,10 @@ export function BillForm({ t, capCents }: { t: string; capCents: number }) {
         </Field>
       ) : null}
 
-      {/* Reserve the row so the layout doesn't jump on the first keystroke. */}
-      <div className="mb-5 min-h-16">
-        {totalCents !== null && covered !== null && excess !== null ? (
+      {/* No reserved height: an empty gap under the field reads as a rendering
+          fault. The panel appears with the first parseable amount. */}
+      {totalCents !== null && covered !== null && excess !== null ? (
+        <div className="mb-5">
           <dl className="rounded-lg bg-surface-sunken px-4 py-3 text-sm">
             {washCents ? (
               <>
@@ -163,8 +164,8 @@ export function BillForm({ t, capCents }: { t: string; capCents: number }) {
               <dd className="tnum font-semibold text-fg">{formatCents(excess)}</dd>
             </div>
           </dl>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {state?.error ? <ErrorNote>{state.error}</ErrorNote> : null}
 

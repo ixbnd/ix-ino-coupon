@@ -27,10 +27,10 @@ export function NavLink({
       <Link
         href={href}
         aria-current={active ? 'page' : undefined}
-        className={`relative flex flex-1 items-center justify-center py-3 text-sm font-medium transition-colors ${
+        className={`relative flex flex-1 items-center justify-center py-3 text-sm transition-colors ${
           active
-            ? 'text-fg after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-brand-strong'
-            : 'text-fg-muted hover:text-fg'
+            ? 'bg-brand-subtle font-semibold text-fg after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:bg-brand-strong'
+            : 'font-medium text-fg-muted hover:text-fg'
         }`}
       >
         {children}
@@ -42,10 +42,10 @@ export function NavLink({
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className={`relative py-1 text-sm font-medium transition-colors ${
+      className={`relative py-1 text-sm transition-colors ${
         active
-          ? 'text-fg after:absolute after:inset-x-0 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-brand-strong'
-          : 'text-fg-muted hover:text-fg'
+          ? 'font-semibold text-fg after:absolute after:inset-x-0 after:-bottom-1 after:h-[3px] after:rounded-full after:bg-brand-strong'
+          : 'font-medium text-fg-muted hover:text-fg'
       }`}
     >
       {children}

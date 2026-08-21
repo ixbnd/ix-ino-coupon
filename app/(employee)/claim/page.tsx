@@ -5,7 +5,7 @@ import { resolveClaimState } from "@/lib/claim";
 import { db } from "@/lib/db/client";
 import { claims } from "@/lib/db/schema";
 import { coveredCents, excessCents, formatCents, capCents } from "@/lib/money";
-import { formatYmdLong, localHm } from "@/lib/thursday";
+import { formatYmdLong, localHm, daysUntil, waitLabel } from "@/lib/thursday";
 import { BillForm } from "./BillForm";
 import { Card, CenteredPage } from "@/components/ui";
 import {
@@ -37,7 +37,8 @@ export default async function ClaimPage({
       `/login?next=${encodeURIComponent(`/claim${t ? `?t=${t}` : ""}`)}`,
     );
 
-  const state = resolveClaimState(t, new Date());
+  const now = new Date();
+  const state = resolveClaimState(t, now);
 
   if (state.kind === "bad_token") {
     return (
@@ -54,21 +55,45 @@ export default async function ClaimPage({
   }
 
   if (state.kind === "not_thursday") {
+    const days = daysUntil(state.nextThursday, now);
     return (
       <Screen>
         <div className="text-center">
-          <p className="text-sm font-medium tracking-wide text-fg-muted uppercase">
-            Not today
+          <span
+            aria-hidden="true"
+            className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-brand-subtle text-brand-strong"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="5" width="18" height="16" rx="2" />
+              <path d="M8 3v4M16 3v4M3 10h18" />
+            </svg>
+          </span>
+
+          <h1 className="text-xl font-semibold tracking-tight text-fg">
+            Come back on Thursday
+          </h1>
+          <p className="mt-2 text-sm text-fg-muted">
+            Your coupon opens once a week, every Thursday.
           </p>
-          <p className="mt-3 text-lg font-semibold text-fg">
-            Coupons are Thursdays only
-          </p>
-          <p className="mt-4 rounded-lg bg-surface-sunken px-4 py-3 text-sm text-fg">
-            Next one:{" "}
-            <span className="font-semibold">
+
+          <div className="mt-5 rounded-lg bg-surface-sunken px-4 py-4">
+            <p className="text-xs font-medium tracking-wide text-fg-muted uppercase">
+              Next coupon
+            </p>
+            <p className="mt-1 text-lg font-semibold text-fg">
               {formatYmdLong(state.nextThursday)}
-            </span>
-          </p>
+            </p>
+            <p className="mt-0.5 text-sm text-fg-muted">{waitLabel(days)}</p>
+          </div>
         </div>
       </Screen>
     );

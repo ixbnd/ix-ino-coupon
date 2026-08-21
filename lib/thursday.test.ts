@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { localYmd, isThursday, nextThursdayYmd, currentWeekThursday, thursdaysInMonth, formatYmdLong, localHm } from './thursday'
+import { localYmd, isThursday, nextThursdayYmd, currentWeekThursday, thursdaysInMonth, formatYmdLong, localHm, daysUntil, waitLabel } from './thursday'
 const TZ = 'Asia/Brunei'
 
 describe('thursday', () => {
@@ -35,5 +35,21 @@ describe('thursday', () => {
     // Midnight and noon are the two the 12-hour clock gets wrong most often.
     expect(localHm(new Date('2026-08-19T16:00:00Z'), TZ)).toBe('12:00 am')
     expect(localHm(new Date('2026-08-20T04:00:00Z'), TZ)).toBe('12:00 pm')
+  })
+})
+
+describe('daysUntil / waitLabel', () => {
+  it('counts whole days in local time', () => {
+    // Fri 21 Aug 2026, 09:00 Brunei -> next Thursday is 27 Aug, six days out.
+    expect(daysUntil('2026-08-27', new Date('2026-08-21T01:00:00Z'), TZ)).toBe(6)
+    // Late evening on the same local day still reads as six, not five.
+    expect(daysUntil('2026-08-27', new Date('2026-08-21T15:30:00Z'), TZ)).toBe(6)
+    expect(daysUntil('2026-08-27', new Date('2026-08-26T01:00:00Z'), TZ)).toBe(1)
+  })
+
+  it('describes the wait in words', () => {
+    expect(waitLabel(0)).toBe('today')
+    expect(waitLabel(1)).toBe('tomorrow')
+    expect(waitLabel(6)).toBe('in 6 days')
   })
 })
